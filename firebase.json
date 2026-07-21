@@ -12,17 +12,9 @@
     ],
     "rewrites": [
       {
-        "source": "/api/stocks",
-        "function": "stocks"
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
-  },
-  "functions": {
-    "source": "functions",
-    "runtime": "python311"
   }
 }
