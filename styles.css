@@ -743,6 +743,118 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
 .formula-card p, .formula-card li { font-size: 0.78rem; color: var(--text-muted); }
 .formula-card ul { padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
 
+/* ─── Modal Smart Search & Suggestions ───────────────────────────── */
+.modal-search-section {
+  margin-bottom: 1.1rem;
+  background: var(--bg-card);
+  padding: 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.search-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #93c5fd;
+  margin-bottom: 0.45rem;
+  font-weight: 600;
+}
+
+.modal-search-wrap {
+  position: relative;
+}
+
+.modal-search-wrap input {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  background: var(--bg);
+  border: 1.5px solid var(--blue);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  font-family: inherit;
+  box-shadow: 0 0 12px rgba(59,130,246,0.25);
+}
+
+.search-spinner {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--blue);
+}
+
+.suggestions-box {
+  margin-top: 0.5rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.suggestions-header {
+  padding: 0.35rem 0.75rem;
+  background: #091322;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.suggestion-item:hover {
+  background: var(--bg-hover);
+}
+
+.sug-stock {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sug-code {
+  font-size: 0.78rem;
+  color: #38bdf8;
+  font-weight: 700;
+  font-family: 'Outfit', monospace;
+  background: rgba(56,189,248,0.15);
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+}
+
+.sug-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sug-cat {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+}
+
 /* ─── Status Indicator ───────────────────────────────────────────── */
 .status-indicator {
   display: flex;

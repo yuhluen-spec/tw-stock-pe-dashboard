@@ -290,48 +290,70 @@
     <div class="modal-box">
       <div class="modal-header">
         <div class="modal-title-group">
-          <div class="modal-icon"><i class="fa-solid fa-pen-to-square"></i></div>
-          <h3 id="modalTitle">新增股票資料</h3>
+          <div class="modal-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
+          <h3 id="modalTitle">搜尋並新增股票</h3>
         </div>
         <button class="modal-close" id="btnCloseModal"><i class="fa-solid fa-xmark"></i></button>
       </div>
+
+      <!-- Smart Autocomplete Search Box -->
+      <div class="modal-search-section">
+        <label for="modalStockSearch" class="search-label">
+          <i class="fa-solid fa-magnifying-glass"></i> 輸入股票代號或名稱（自動帶出前 7 筆）：
+        </label>
+        <div class="modal-search-wrap">
+          <input type="text" id="modalStockSearch" placeholder="例：2317、鴻海、聯發科、廣達、長榮..." autocomplete="off">
+          <i class="fa-solid fa-spinner fa-spin search-spinner" id="modalSearchSpinner" style="display:none"></i>
+        </div>
+
+        <!-- Dynamic Suggestions Box (Top 7 Matches) -->
+        <div class="suggestions-box" id="suggestionsBox" style="display:none">
+          <div class="suggestions-header">匹配熱門個股 (點擊即可自動帶入所有資料)：</div>
+          <div class="suggestions-list" id="suggestionsList">
+            <!-- Dynamic 7 suggestion items -->
+          </div>
+        </div>
+      </div>
+
       <form id="stockForm">
         <input type="hidden" id="editStockId">
         <div class="form-grid-2">
           <div class="form-field">
             <label for="inputCategory">產業類別</label>
-            <input type="text" id="inputCategory" placeholder="例：晶圓代工" required>
+            <input type="text" id="inputCategory" placeholder="自動帶入產業" required>
           </div>
           <div class="form-field">
             <label for="inputCode">股票代號</label>
-            <input type="text" id="inputCode" placeholder="例：2330" required>
+            <input type="text" id="inputCode" placeholder="自動帶入代號" required>
           </div>
         </div>
         <div class="form-field">
           <label for="inputName">股票名稱</label>
-          <input type="text" id="inputName" placeholder="例：台積電" required>
+          <input type="text" id="inputName" placeholder="自動帶入名稱" required>
         </div>
         <div class="form-grid-3">
           <div class="form-field">
             <label for="inputEps2025">2025全年EPS</label>
-            <input type="number" step="0.01" id="inputEps2025" placeholder="66.25">
+            <input type="number" step="0.01" id="inputEps2025" placeholder="自動算">
           </div>
           <div class="form-field">
             <label for="inputEps2026Q1">2026 Q1 EPS</label>
-            <input type="number" step="0.01" id="inputEps2026Q1" placeholder="22.08">
+            <input type="number" step="0.01" id="inputEps2026Q1" placeholder="自動算">
           </div>
           <div class="form-field">
             <label for="inputEps2026Q2">2026 Q2累計EPS</label>
-            <input type="number" step="0.01" id="inputEps2026Q2" placeholder="49.33">
+            <input type="number" step="0.01" id="inputEps2026Q2" placeholder="自動算">
           </div>
         </div>
         <div class="form-field">
           <label for="inputPrice">最新收盤價（元）</label>
-          <input type="number" step="0.1" id="inputPrice" placeholder="2290.00" required>
+          <input type="number" step="0.1" id="inputPrice" placeholder="自動帶出價格" required>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn ghost" id="btnCancelModal">取消</button>
-          <button type="submit" class="btn primary">儲存資料</button>
+          <button type="submit" class="btn primary" id="btnSubmitStock">
+            <i class="fa-solid fa-plus"></i> 一鍵新增個股
+          </button>
         </div>
       </form>
     </div>
