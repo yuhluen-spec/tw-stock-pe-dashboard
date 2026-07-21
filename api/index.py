@@ -1,33 +1,39 @@
 import os
-from flask import Flask, jsonify, request, send_from_directory
 import urllib.request
 import urllib.parse
 import ssl
 import json
+import time
+from concurrent.futures import ThreadPoolExecutor
+from flask import Flask, jsonify, request, send_from_directory
 
 app = Flask(__name__)
 
 # Base directory for static files (parent of api folder)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Server-side Cache: { '2026-07-17': { 'ts': timestamp, 'stocks': [...] } }
+SERVER_CACHE = {}
+CACHE_TTL = 1800  # 30 minutes in seconds
+
 STOCK_METADATA = [
-    { 'code': '2303', 'name': '聯電', 'category': '晶圓代工' },
-    { 'code': '2330', 'name': '台積電', 'category': '晶圓代工' },
-    { 'code': '5347', 'name': '世界先進', 'category': '晶圓代工' },
-    { 'code': '5274', 'name': '信驊', 'category': 'IC設計' },
-    { 'code': '2059', 'name': '川湖', 'category': '軸承/滑軌' },
-    { 'code': '7769', 'name': '鴻勁', 'category': '半導體設備' },
-    { 'code': '6515', 'name': '穎崴', 'category': '半導體封測材料' },
-    { 'code': '6223', 'name': '旺矽', 'category': '半導體封測材料' },
-    { 'code': '1301', 'name': '台塑', 'category': '塑膠' },
-    { 'code': '1303', 'name': '南亞', 'category': '塑膠' },
-    { 'code': '1326', 'name': '台化', 'category': '塑膠' },
-    { 'code': '2881', 'name': '富邦金', 'category': '金融保險' },
-    { 'code': '2882', 'name': '國泰金', 'category': '金融保險' },
-    { 'code': '2891', 'name': '中信金', 'category': '金融保險' },
-    { 'code': '6446', 'name': '藥華藥', 'category': '生技股' },
-    { 'code': '6472', 'name': '保瑞', 'category': '生技股' },
-    { 'code': '7799', 'name': '禾榮科', 'category': '生技股' }
+    { 'code': '2303', 'name': '聯電', 'category': '晶圓代工', 'market': 'TWSE' },
+    { 'code': '2330', 'name': '台積電', 'category': '晶圓代工', 'market': 'TWSE' },
+    { 'code': '5347', 'name': '世界先進', 'category': '晶圓代工', 'market': 'TPEX' },
+    { 'code': '5274', 'name': '信驊', 'category': 'IC設計', 'market': 'TPEX' },
+    { 'code': '2059', 'name': '川湖', 'category': '軸承/滑軌', 'market': 'TWSE' },
+    { 'code': '7769', 'name': '鴻勁', 'category': '半導體設備', 'market': 'TPEX' },
+    { 'code': '6515', 'name': '穎崴', 'category': '半導體封測材料', 'market': 'TWSE' },
+    { 'code': '6223', 'name': '旺矽', 'category': '半導體封測材料', 'market': 'TWSE' },
+    { 'code': '1301', 'name': '台塑', 'category': '塑膠', 'market': 'TWSE' },
+    { 'code': '1303', 'name': '南亞', 'category': '塑膠', 'market': 'TWSE' },
+    { 'code': '1326', 'name': '台化', 'category': '塑膠', 'market': 'TWSE' },
+    { 'code': '2881', 'name': '富邦金', 'category': '金融保險', 'market': 'TWSE' },
+    { 'code': '2882', 'name': '國泰金', 'category': '金融保險', 'market': 'TWSE' },
+    { 'code': '2891', 'name': '中信金', 'category': '金融保險', 'market': 'TWSE' },
+    { 'code': '6446', 'name': '藥華藥', 'category': '生技股', 'market': 'TPEX' },
+    { 'code': '6472', 'name': '保瑞', 'category': '生技股', 'market': 'TWSE' },
+    { 'code': '7799', 'name': '禾榮科', 'category': '生技股', 'market': 'TPEX' }
 ]
 
 SNAPSHOT_PRICES_20260717 = {
@@ -80,7 +86,7 @@ def derive_eps_from_finmind(stock_id, ctx):
             eps2026q2 = round((eps2026q1 or 0) + eps2026q2_standalone, 2) if (eps2026q1 and eps2026q2_standalone) else None
             
             ref = EPS_DERIVED_MAP.get(stock_id, {})
-            return {
+            return stock_id, {
                 'eps2025': eps2025 if eps2025 is not None else ref.get('eps2025'),
                 'eps2026q1': eps2026q1 if eps2026q1 is not None else ref.get('eps2026q1'),
                 'eps2026q2': eps2026q2 if eps2026q2 is not None else ref.get('eps2026q2'),
@@ -88,7 +94,7 @@ def derive_eps_from_finmind(stock_id, ctx):
             }
     except Exception:
         ref = EPS_DERIVED_MAP.get(stock_id, {})
-        return {
+        return stock_id, {
             'eps2025': ref.get('eps2025'),
             'eps2026q1': ref.get('eps2026q1'),
             'eps2026q2': ref.get('eps2026q2'),
@@ -100,7 +106,7 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
     url = f"https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date={date_yyyymmdd}&type=ALLBUT0999&response=json"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        with urllib.request.urlopen(req, context=ctx, timeout=4) as res:
+        with urllib.request.urlopen(req, context=ctx, timeout=3) as res:
             data = json.loads(res.read().decode('utf-8'))
             if data.get('stat') == 'OK':
                 for t in data.get('tables', []):
@@ -117,6 +123,33 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
         pass
     return prices
 
+def fetch_tpex_prices(date_param, ctx):
+    """Fetch OTC prices from TPEX (櫃買中心) for stocks on TPEX market."""
+    prices = {}
+    try:
+        # Date format YYYY-MM-DD -> ROC format YYY/MM/DD
+        parts = date_param.split('-')
+        if len(parts) == 3:
+            roc_year = int(parts[0]) - 1911
+            roc_date = f"{roc_year}/{parts[1]}/{parts[2]}"
+            url = f"https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&d={roc_date}&_={int(time.time()*1000)}"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, context=ctx, timeout=3) as res:
+                data = json.loads(res.read().decode('utf-8'))
+                rows = data.get('aaData', [])
+                for row in rows:
+                    if len(row) >= 3:
+                        code = str(row[0]).strip()
+                        price_str = str(row[2]).replace(',', '').strip()
+                        try:
+                            p = float(price_str)
+                            if p > 0: prices[code] = p
+                        except ValueError:
+                            pass
+    except Exception:
+        pass
+    return prices
+
 # Route for serving static frontend files
 @app.route('/')
 def serve_index():
@@ -128,21 +161,52 @@ def serve_static(filename):
         return send_from_directory(BASE_DIR, filename)
     return send_from_directory(BASE_DIR, 'index.html')
 
-# Route for stock API
+# Route for stock API with Multi-threaded Async Parallel Fetching & Caching
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
     date_param = request.args.get('date', '2026-07-17')
     date_yyyymmdd = date_param.replace('-', '')
     
+    # Check Server-side Cache
+    now = time.time()
+    if date_param in SERVER_CACHE:
+        cached_entry = SERVER_CACHE[date_param]
+        if now - cached_entry['ts'] < CACHE_TTL:
+            return jsonify({
+                'status': 'ok',
+                'cached': True,
+                'date': date_param,
+                'stocks': cached_entry['stocks']
+            })
+
     ctx = ssl._create_unverified_context()
-    live_prices = fetch_twse_prices(date_yyyymmdd, ctx)
-    
+
+    # Parallel Execution: Fetch TWSE, TPEX, and 17 FinMind stock EPS concurrently
+    eps_results = {}
+    twse_prices = {}
+    tpex_prices = {}
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        twse_future = executor.submit(fetch_twse_prices, date_yyyymmdd, ctx)
+        tpex_future = executor.submit(fetch_tpex_prices, date_param, ctx)
+        eps_futures = [executor.submit(derive_eps_from_finmind, item['code'], ctx) for item in STOCK_METADATA]
+
+        twse_prices = twse_future.result()
+        tpex_prices = tpex_future.result()
+
+        for f in eps_futures:
+            code, eps_dict = f.result()
+            eps_results[code] = eps_dict
+
+    # Merge prices (TWSE -> TPEX -> Fallback Snapshot)
+    live_prices = {**twse_prices, **tpex_prices}
+
     result_stocks = []
     for item in STOCK_METADATA:
         code = item['code']
         price = live_prices.get(code, SNAPSHOT_PRICES_20260717.get(code, 100.0))
-        eps_data = derive_eps_from_finmind(code, ctx)
-        
+        eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
+
         result_stocks.append({
             'id': code,
             'category': item['category'],
@@ -155,8 +219,15 @@ def get_stocks():
             'price': price
         })
 
+    # Save to Server-Side Cache
+    SERVER_CACHE[date_param] = {
+        'ts': now,
+        'stocks': result_stocks
+    }
+
     return jsonify({
         'status': 'ok',
+        'cached': False,
         'date': date_param,
         'stocks': result_stocks
     })
