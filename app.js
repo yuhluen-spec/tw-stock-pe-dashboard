@@ -203,14 +203,70 @@ function updateKPIs(list) {
   }
 }
 
-/* ─── Fetch data ─────────────────────────────────────────────────── */
-async function fetchStockData(dateStr) {
+/* ─── LocalStorage Cache helpers ─────────────────────────────────── */
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_PREFIX = 'tw_pe_';
+
+function cacheKey(dateStr) { return CACHE_PREFIX + dateStr; }
+
+function loadCache(dateStr) {
+  try {
+    const raw = localStorage.getItem(cacheKey(dateStr));
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (Date.now() - obj.ts > CACHE_TTL_MS) {
+      localStorage.removeItem(cacheKey(dateStr));
+      return null;
+    }
+    return obj.data;
+  } catch { return null; }
+}
+
+function saveCache(dateStr, data) {
+  try {
+    localStorage.setItem(cacheKey(dateStr), JSON.stringify({ ts: Date.now(), data }));
+    const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX));
+    if (keys.length > 7) {
+      keys.sort().slice(0, keys.length - 7).forEach(k => localStorage.removeItem(k));
+    }
+  } catch {}
+}
+
+/* ─── Get latest trading date (Mon–Fri, Taiwan timezone) ─────────── */
+function getLatestTradingDate() {
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  if (d.getHours() < 16) d.setDate(d.getDate() - 1);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/* ─── Fetch data (with LocalStorage cache) ───────────────────────── */
+async function fetchStockData(dateStr, forceRefresh = false) {
   const btn = document.getElementById('btnLoadDateData');
+  document.getElementById('datePicker').value = dateStr;
+
+  // Try cache first (Shift+Click query btn to force refresh)
+  if (!forceRefresh) {
+    const cached = loadCache(dateStr);
+    if (cached) {
+      stockList = cached;
+      const d = dateStr.replace(/-/g, '/');
+      document.getElementById('priceHeaderDate').textContent = `${d} 收盤價`;
+      document.getElementById('updateTime').textContent = `${d} ─ 快取資料`;
+      document.getElementById('sidebarStatusText').textContent = `${d} (快取)`;
+      renderTabs();
+      renderTable();
+      return;
+    }
+  }
+
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
   btn.disabled = true;
-
   document.getElementById('updateTime').textContent = '資料載入中…';
-  document.getElementById('sidebarStatusText').textContent = '資料載入中…';
+  document.getElementById('sidebarStatusText').textContent = '載入中…';
 
   try {
     const res = await fetch(`/api/stocks?date=${dateStr}`);
@@ -218,13 +274,23 @@ async function fetchStockData(dateStr) {
     const data = await res.json();
     if (data.stocks) {
       stockList = data.stocks;
+      saveCache(dateStr, stockList); // save to localStorage
       const d = dateStr.replace(/-/g, '/');
       document.getElementById('priceHeaderDate').textContent = `${d} 收盤價`;
-      document.getElementById('updateTime').textContent = `${d} 資料已更新`;
+      document.getElementById('updateTime').textContent = `${d} 已更新`;
       document.getElementById('sidebarStatusText').textContent = `${d} 已載入`;
       renderTabs();
       renderTable();
     }
+  } catch (err) {
+    document.getElementById('updateTime').textContent = '載入失敗，請重試';
+    document.getElementById('sidebarStatusText').textContent = '載入失敗';
+    console.error(err);
+  } finally {
+    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i><span>查詢</span>';
+    btn.disabled = false;
+  }
+}
   } catch (err) {
     document.getElementById('updateTime').textContent = '載入失敗，請重試';
     console.error(err);
@@ -313,11 +379,15 @@ function initScrollShadow() {
 document.addEventListener('DOMContentLoaded', () => {
   const datePicker = document.getElementById('datePicker');
 
-  fetchStockData(datePicker.value);
+  // Auto-load latest trading date
+  const latestDate = getLatestTradingDate();
+  fetchStockData(latestDate);
   initScrollShadow();
 
-  /* Date query */
-  document.getElementById('btnLoadDateData').addEventListener('click', () => fetchStockData(datePicker.value));
+  // Shift+Click = force refresh (bypass cache)
+  document.getElementById('btnLoadDateData').addEventListener('click', (e) => {
+    fetchStockData(document.getElementById('datePicker').value, e.shiftKey);
+  });
 
   document.getElementById('btnDateSnapshot').addEventListener('click', () => {
     datePicker.value = '2026-07-17'; setChip('btnDateSnapshot'); fetchStockData('2026-07-17');

@@ -473,7 +473,7 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
+  /* NOTE: must NOT be overflow:hidden — breaks position:sticky */
   display: flex;
   flex-direction: column;
 }
@@ -487,13 +487,24 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   color: var(--text-dim);
   background: var(--bg-2);
   border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* The outer wrapper clips horizontally but allows vertical sticky */
+.table-outer {
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
 .table-container {
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
+  /* max-height for vertical scroll on desktop */
+  max-height: calc(100dvh - 340px);
+  min-height: 200px;
 }
-.table-container::-webkit-scrollbar { height: 5px; }
+.table-container::-webkit-scrollbar { height: 5px; width: 5px; }
 .table-container::-webkit-scrollbar-track { background: var(--bg-2); }
 .table-container::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
 
@@ -546,12 +557,16 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   border-bottom: 1px solid var(--border-2);
   letter-spacing: 0.3px;
   user-select: none;
+  /* ── Sticky thead ── */
+  position: sticky;
+  top: 0;
+  z-index: 4;
 }
 
 .stock-table thead .sticky-col {
   background: #060d1b;
   text-align: left;
-  z-index: 3;
+  z-index: 5;   /* above both sticky-col in tbody AND sticky thead */
 }
 
 .th-inner { display: flex; align-items: center; gap: 0.3rem; }
