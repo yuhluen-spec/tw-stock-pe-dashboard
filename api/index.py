@@ -12,11 +12,12 @@ app = Flask(__name__)
 # Base directory for static files (parent of api folder)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Server-side Cache: { '2026-07-17': { 'ts': timestamp, 'stocks': [...] } }
+# Server-side Cache
 SERVER_CACHE = {}
-CACHE_TTL = 1800  # 30 minutes in seconds
+CACHE_TTL = 1800  # 30 minutes
 
 STOCK_METADATA = [
+    { 'code': '3010', 'name': '華立', 'category': '半導體材料', 'market': 'TWSE' },
     { 'code': '2303', 'name': '聯電', 'category': '晶圓代工', 'market': 'TWSE' },
     { 'code': '2330', 'name': '台積電', 'category': '晶圓代工', 'market': 'TWSE' },
     { 'code': '5347', 'name': '世界先進', 'category': '晶圓代工', 'market': 'TPEX' },
@@ -37,13 +38,14 @@ STOCK_METADATA = [
 ]
 
 SNAPSHOT_PRICES_20260717 = {
-    '2303': 144.00, '2330': 2290.00, '5347': 169.00, '5274': 12950.00,
+    '3010': 116.00, '2303': 144.00, '2330': 2290.00, '5347': 169.00, '5274': 12950.00,
     '2059': 7890.00, '7769': 6070.00, '6515': 6055.00, '6223': 5600.00,
     '1301': 62.80, '1303': 199.00, '1326': 66.10, '2881': 124.50,
     '2882': 94.30, '2891': 62.10, '6446': 1195.00, '6472': 396.00, '7799': 415.50
 }
 
 EPS_DERIVED_MAP = {
+    '3010': { 'eps2025': 8.84, 'eps2026q1': 2.47, 'eps2026q2': None, 'epsTTM': 9.37 },
     '2303': { 'eps2025': 3.34, 'eps2026q1': 1.29, 'eps2026q2': None, 'epsTTM': 4.00 },
     '2330': { 'eps2025': 66.25, 'eps2026q1': 22.08, 'eps2026q2': 49.33, 'epsTTM': 74.39 },
     '5347': { 'eps2025': 4.30, 'eps2026q1': 1.22, 'eps2026q2': None, 'epsTTM': 4.90 },
@@ -124,10 +126,8 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
     return prices
 
 def fetch_tpex_prices(date_param, ctx):
-    """Fetch OTC prices from TPEX (櫃買中心) for stocks on TPEX market."""
     prices = {}
     try:
-        # Date format YYYY-MM-DD -> ROC format YYY/MM/DD
         parts = date_param.split('-')
         if len(parts) == 3:
             roc_year = int(parts[0]) - 1911
@@ -150,7 +150,6 @@ def fetch_tpex_prices(date_param, ctx):
         pass
     return prices
 
-# Route for serving static frontend files
 @app.route('/')
 def serve_index():
     return send_from_directory(BASE_DIR, 'index.html')
@@ -161,15 +160,15 @@ def serve_static(filename):
         return send_from_directory(BASE_DIR, filename)
     return send_from_directory(BASE_DIR, 'index.html')
 
-# Route for stock API with Multi-threaded Async Parallel Fetching & Caching
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
-    date_param = request.args.get('date', '2026-07-17')
+    date_param = request.args.get('date', '2026-07-21')
+    req_code = request.args.get('code')
     date_yyyymmdd = date_param.replace('-', '')
     
-    # Check Server-side Cache
+    # Check Server-side Cache (only for full list requests)
     now = time.time()
-    if date_param in SERVER_CACHE:
+    if not req_code and date_param in SERVER_CACHE:
         cached_entry = SERVER_CACHE[date_param]
         if now - cached_entry['ts'] < CACHE_TTL:
             return jsonify({
@@ -180,8 +179,17 @@ def get_stocks():
             })
 
     ctx = ssl._create_unverified_context()
+    
+    # Determine target stocks
+    target_metadata = STOCK_METADATA
+    if req_code:
+        # Dynamic single stock request
+        existing_meta = next((s for s in STOCK_METADATA if s['code'] == req_code), None)
+        if existing_meta:
+            target_metadata = [existing_meta]
+        else:
+            target_metadata = [{ 'code': req_code, 'name': req_code, 'category': '自訂個股', 'market': 'TWSE' }]
 
-    # Parallel Execution: Fetch TWSE, TPEX, and 17 FinMind stock EPS concurrently
     eps_results = {}
     twse_prices = {}
     tpex_prices = {}
@@ -189,7 +197,7 @@ def get_stocks():
     with ThreadPoolExecutor(max_workers=10) as executor:
         twse_future = executor.submit(fetch_twse_prices, date_yyyymmdd, ctx)
         tpex_future = executor.submit(fetch_tpex_prices, date_param, ctx)
-        eps_futures = [executor.submit(derive_eps_from_finmind, item['code'], ctx) for item in STOCK_METADATA]
+        eps_futures = [executor.submit(derive_eps_from_finmind, item['code'], ctx) for item in target_metadata]
 
         twse_prices = twse_future.result()
         tpex_prices = tpex_future.result()
@@ -198,11 +206,10 @@ def get_stocks():
             code, eps_dict = f.result()
             eps_results[code] = eps_dict
 
-    # Merge prices (TWSE -> TPEX -> Fallback Snapshot)
     live_prices = {**twse_prices, **tpex_prices}
 
     result_stocks = []
-    for item in STOCK_METADATA:
+    for item in target_metadata:
         code = item['code']
         price = live_prices.get(code, SNAPSHOT_PRICES_20260717.get(code, 100.0))
         eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
@@ -219,11 +226,11 @@ def get_stocks():
             'price': price
         })
 
-    # Save to Server-Side Cache
-    SERVER_CACHE[date_param] = {
-        'ts': now,
-        'stocks': result_stocks
-    }
+    if not req_code:
+        SERVER_CACHE[date_param] = {
+            'ts': now,
+            'stocks': result_stocks
+        }
 
     return jsonify({
         'status': 'ok',
