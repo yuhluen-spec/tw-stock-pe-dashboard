@@ -1,6 +1,27 @@
 // Dynamic Stock Dataset loaded from Live Financial EPS Derivation Engine
 let stockList = [];
 let activeCategory = 'ALL';
+let currentViewMode = 'auto'; // 'auto', 'table', 'card'
+let deferredPwaPrompt = null;
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      console.log('PWA ServiceWorker registered with scope:', reg.scope);
+    }).catch((err) => {
+      console.error('ServiceWorker registration failed:', err);
+    });
+  });
+}
+
+// PWA Install Prompt Handler
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPwaPrompt = e;
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.add('show');
+});
 
 // Calculation helper functions
 function calculateKnownPE(price, eps2025) {
@@ -9,11 +30,9 @@ function calculateKnownPE(price, eps2025) {
 }
 
 function calculateCurrentMultiple(price, epsTTM, eps2026q1, eps2026q2) {
-  // Primary: TTM EPS (Last 4 quarters cumulative)
   if (epsTTM && epsTTM > 0) {
     return Number((price / epsTTM).toFixed(2));
   }
-  // Secondary fallback: 2026 Q2 cum or Q1 if TTM not available
   const curEps = eps2026q2 || eps2026q1;
   if (curEps && curEps > 0) {
     return Number((price / curEps).toFixed(2));
@@ -35,7 +54,6 @@ function calculateEstPE(price, q1, q2, q3) {
   return Number((price / estEps).toFixed(2));
 }
 
-// Format numbers for display
 function formatNum(val) {
   if (val === null || val === undefined || isNaN(val)) return '-';
   return val.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -65,7 +83,7 @@ function getPeBadgeHtml(peVal, customClass = '') {
   return `<span class="pe-badge ${className}">${peVal.toFixed(2)} 倍</span>`;
 }
 
-// Render dynamic elements
+// Render Category Tabs
 function renderIndustryTabs() {
   const categories = ['全部', ...new Set(stockList.map(s => s.category))];
   const container = document.getElementById('industryTabs');
@@ -80,16 +98,15 @@ function renderIndustryTabs() {
     btn.addEventListener('click', (e) => {
       activeCategory = e.target.getAttribute('data-cat');
       renderIndustryTabs();
-      renderTable();
+      renderAllViews();
     });
   });
 }
 
-function renderTable() {
+function getFilteredAndSortedStocks() {
   const searchKey = document.getElementById('searchInput').value.trim().toLowerCase();
   const sortBy = document.getElementById('sortBySelect').value;
 
-  // Filter list
   let filtered = stockList.filter(item => {
     const matchCat = (activeCategory === 'ALL') || (item.category === activeCategory);
     const matchSearch = !searchKey || 
@@ -99,7 +116,6 @@ function renderTable() {
     return matchCat && matchSearch;
   });
 
-  // Sort list
   filtered.sort((a, b) => {
     const knownPeA = calculateKnownPE(a.price, a.eps2025);
     const knownPeB = calculateKnownPE(b.price, b.eps2025);
@@ -137,10 +153,21 @@ function renderTable() {
     return 0;
   });
 
+  return filtered;
+}
+
+function renderAllViews() {
+  const filtered = getFilteredAndSortedStocks();
+  renderTable(filtered);
+  renderMobileCards(filtered);
+  updateStats(filtered);
+  updateActiveView();
+}
+
+function renderTable(filtered) {
   const tbody = document.getElementById('stockTableBody');
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="11" class="text-center" style="padding: 2rem; color: var(--text-muted);">無符合條件的股票資料</td></tr>`;
-    updateStats([]);
     return;
   }
 
@@ -148,7 +175,6 @@ function renderTable() {
     const knownPe = calculateKnownPE(item.price, item.eps2025);
     const estPe = calculateEstPE(item.price, item.eps2026q1, item.eps2026q2, item.eps2026q3);
     const currentMultiple = calculateCurrentMultiple(item.price, item.epsTTM, item.eps2026q1, item.eps2026q2);
-
     const catClass = 'cat-' + item.category.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
 
     return `
@@ -175,8 +201,82 @@ function renderTable() {
       </tr>
     `;
   }).join('');
+}
 
-  updateStats(filtered);
+// Render Mobile Stock App Cards
+function renderMobileCards(filtered) {
+  const container = document.getElementById('mobileCardsGrid');
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1/-1;">無符合條件的股票資料</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => {
+    const knownPe = calculateKnownPE(item.price, item.eps2025);
+    const estPe = calculateEstPE(item.price, item.eps2026q1, item.eps2026q2, item.eps2026q3);
+    const currentMultiple = calculateCurrentMultiple(item.price, item.epsTTM, item.eps2026q1, item.eps2026q2);
+
+    // Get background tint for cat tag
+    let catStyle = 'background: rgba(59, 130, 246, 0.2); color: #60a5fa;';
+    if (item.category.includes('晶圓')) catStyle = 'background: rgba(234, 179, 8, 0.2); color: #fef08a;';
+    else if (item.category.includes('塑膠')) catStyle = 'background: rgba(244, 63, 94, 0.2); color: #fecdd3;';
+    else if (item.category.includes('金融')) catStyle = 'background: rgba(14, 165, 233, 0.2); color: #bae6fd;';
+    else if (item.category.includes('生技')) catStyle = 'background: rgba(168, 85, 247, 0.2); color: #e9d5ff;';
+    else if (item.category.includes('半導體') || item.category.includes('IC')) catStyle = 'background: rgba(34, 197, 94, 0.2); color: #bbf7d0;';
+
+    return `
+      <div class="mobile-stock-card">
+        <div class="m-card-top">
+          <div class="m-stock-info">
+            <div class="m-stock-title">
+              <span class="m-stock-name">${item.name}</span>
+              <span class="m-stock-code">${item.code}</span>
+            </div>
+            <span class="m-cat-tag" style="${catStyle}">${item.category}</span>
+          </div>
+          <div class="m-price-box">
+            <span class="m-price-num">${formatNum(item.price)}</span>
+            <span class="m-price-unit">元</span>
+          </div>
+        </div>
+
+        <div class="m-metrics-grid">
+          <div class="m-metric-item">
+            <span class="m-metric-label">2025 全年</span>
+            <span class="m-metric-val">${formatEps(item.eps2025)}</span>
+          </div>
+          <div class="m-metric-item">
+            <span class="m-metric-label">2026 Q1</span>
+            <span class="m-metric-val">${formatEps(item.eps2026q1)}</span>
+          </div>
+          <div class="m-metric-item">
+            <span class="m-metric-label">TTM 近4季</span>
+            <span class="m-metric-val" style="color: #38bdf8; font-weight:700;">${formatEps(item.epsTTM)}</span>
+          </div>
+        </div>
+
+        <div class="m-pe-section">
+          <div class="m-pe-box">
+            <span class="m-pe-title">已知 P/E</span>
+            ${getPeBadgeHtml(knownPe)}
+          </div>
+          <div class="m-pe-box">
+            <span class="m-pe-title">目前 EPS 倍數</span>
+            ${getPeBadgeHtml(currentMultiple, 'cyan')}
+          </div>
+          <div class="m-pe-box">
+            <span class="m-pe-title">預估 P/E</span>
+            ${getPeBadgeHtml(estPe)}
+          </div>
+        </div>
+
+        <div class="m-card-actions">
+          <button class="btn-icon" onclick="editStock('${item.id}')"><i class="fa-solid fa-pen"></i> 編輯</button>
+          <button class="btn-icon delete" onclick="deleteStock('${item.id}')"><i class="fa-solid fa-trash"></i> 刪除</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function updateStats(items) {
@@ -212,11 +312,28 @@ function updateStats(items) {
   }
 }
 
-// Fetch dynamic stock data & live derived EPS from backend
+function updateActiveView() {
+  const isMobile = window.innerWidth <= 768;
+  const tableView = document.getElementById('tableViewSection');
+  const cardsView = document.getElementById('cardsViewSection');
+  const btnText = document.querySelector('.btn-view-toggle .view-text');
+
+  if (currentViewMode === 'card' || (currentViewMode === 'auto' && isMobile)) {
+    tableView.classList.remove('active');
+    cardsView.classList.add('active');
+    if (btnText) btnText.textContent = '表格模式';
+  } else {
+    cardsView.classList.remove('active');
+    tableView.classList.add('active');
+    if (btnText) btnText.textContent = '卡片模式';
+  }
+}
+
+// Fetch dynamic stock data
 async function fetchStockData(dateStr) {
   const btn = document.getElementById('btnLoadDateData');
   const originalHtml = btn.innerHTML;
-  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 計算中...`;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 載入中...`;
   btn.disabled = true;
 
   try {
@@ -228,10 +345,10 @@ async function fetchStockData(dateStr) {
       stockList = resData.stocks;
       const dateFormatted = dateStr.replace(/-/g, '/');
       document.getElementById('priceHeaderDate').textContent = `${dateFormatted}收盤價`;
-      document.getElementById('updateTime').textContent = `已即時計算「目前 EPS 倍數 (TTM)」與「預估本益比」(${dateFormatted})`;
+      document.getElementById('updateTime').textContent = `已即時更新 ${dateFormatted} 歷史股價與財報指標`;
       
       renderIndustryTabs();
-      renderTable();
+      renderAllViews();
     }
   } catch (err) {
     console.error('Fetch stock data failed:', err);
@@ -279,14 +396,14 @@ window.deleteStock = function(id) {
   if (stock && confirm(`確定要刪除 ${stock.code} ${stock.name} 嗎？`)) {
     stockList = stockList.filter(s => s.id !== id);
     renderIndustryTabs();
-    renderTable();
+    renderAllViews();
   }
 };
 
 // Export to CSV
 function exportCsv() {
   const dateStr = document.getElementById('datePicker').value;
-  let csvContent = '\uFEFF'; // UTF-8 BOM
+  let csvContent = '\uFEFF';
   csvContent += `產業,熱門股代號,熱門股名稱,2025年全年稅後EPS,2026年第一季稅後EPS,2026年第二季稅後EPS,近4季累計EPS(TTM),${dateStr}收盤價,已知本益比(2025),目前EPS倍數(TTM),預估本益比\n`;
 
   stockList.forEach(item => {
@@ -300,7 +417,7 @@ function exportCsv() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `台股本益比與目前倍數試算表_${dateStr}.csv`);
+  link.setAttribute('download', `台股本益比試算表_${dateStr}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -321,19 +438,51 @@ document.addEventListener('DOMContentLoaded', () => {
   const datePicker = document.getElementById('datePicker');
   fetchStockData(datePicker.value);
 
+  // View Toggle Button
+  document.getElementById('btnToggleView').addEventListener('click', () => {
+    if (currentViewMode === 'card') currentViewMode = 'table';
+    else currentViewMode = 'card';
+    updateActiveView();
+  });
+
+  // PWA Install Button
+  document.getElementById('btnInstallPwa')?.addEventListener('click', async () => {
+    if (deferredPwaPrompt) {
+      deferredPwaPrompt.prompt();
+      const { outcome } = await deferredPwaPrompt.userChoice;
+      console.log(`User PWA prompt outcome: ${outcome}`);
+      deferredPwaPrompt = null;
+      document.getElementById('pwaInstallBanner')?.classList.remove('show');
+    }
+  });
+
+  document.getElementById('btnDismissPwa')?.addEventListener('click', () => {
+    document.getElementById('pwaInstallBanner')?.classList.remove('show');
+  });
+
+  // Mobile Bottom Nav
+  document.getElementById('navHome')?.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.getElementById('navDate')?.addEventListener('click', () => {
+    datePicker.focus();
+    datePicker.scrollIntoView({ behavior: 'smooth' });
+  });
+  document.getElementById('navAdd')?.addEventListener('click', () => openModal());
+  document.getElementById('navExport')?.addEventListener('click', exportCsv);
+
   // Load Date Button
   document.getElementById('btnLoadDateData').addEventListener('click', () => {
     fetchStockData(datePicker.value);
   });
 
-  // Shortcut 1: Image Snapshot Date (2026-07-17)
+  // Date Shortcuts
   document.getElementById('btnDateSnapshot').addEventListener('click', () => {
     datePicker.value = '2026-07-17';
     setActiveShortcut('btnDateSnapshot');
     fetchStockData('2026-07-17');
   });
 
-  // Shortcut 2: Today / Latest
   document.getElementById('btnDateToday').addEventListener('click', () => {
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -345,7 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchStockData(todayStr);
   });
 
-  // Shortcut 3: Prev Day
   document.getElementById('btnDatePrevDay').addEventListener('click', () => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
@@ -358,8 +506,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchStockData(prevStr);
   });
 
-  document.getElementById('searchInput').addEventListener('input', renderTable);
-  document.getElementById('sortBySelect').addEventListener('change', renderTable);
+  document.getElementById('searchInput').addEventListener('input', renderAllViews);
+  document.getElementById('sortBySelect').addEventListener('change', renderAllViews);
   
   document.getElementById('btnAddStock').addEventListener('click', () => openModal());
   document.getElementById('btnCloseModal').addEventListener('click', closeModal);
@@ -397,6 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeModal();
     renderIndustryTabs();
-    renderTable();
+    renderAllViews();
   });
+
+  window.addEventListener('resize', updateActiveView);
 });

@@ -17,23 +17,18 @@
   /* Industry row colors matching the user screenshot */
   --cat-wafer-bg: rgba(234, 179, 8, 0.15);
   --cat-wafer-border: #eab308;
-  --cat-wafer-text: #fef08a;
 
   --cat-semicon-bg: rgba(34, 197, 94, 0.15);
   --cat-semicon-border: #22c55e;
-  --cat-semicon-text: #bbf7d0;
 
   --cat-plastic-bg: rgba(244, 63, 94, 0.15);
   --cat-plastic-border: #f43f5e;
-  --cat-plastic-text: #fecdd3;
 
   --cat-finance-bg: rgba(14, 165, 233, 0.15);
   --cat-finance-border: #0ea5e9;
-  --cat-finance-text: #bae6fd;
 
   --cat-biotech-bg: rgba(168, 85, 247, 0.15);
   --cat-biotech-border: #a855f7;
-  --cat-biotech-text: #e9d5ff;
 
   --font-main: 'Outfit', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
 }
@@ -42,6 +37,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -49,8 +45,88 @@ body {
   color: var(--text-main);
   font-family: var(--font-main);
   min-height: 100vh;
-  padding: 1.5rem;
+  padding: 1.25rem;
+  padding-bottom: 5rem; /* Space for mobile nav */
   line-height: 1.5;
+}
+
+/* PWA Install Banner */
+.pwa-install-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-bottom: 1px solid var(--primary);
+  padding: 0.75rem 1rem;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pwa-install-banner.show {
+  display: flex;
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pwa-app-icon {
+  width: 38px;
+  height: 38px;
+  background: var(--primary);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.pwa-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pwa-text strong {
+  font-size: 0.88rem;
+  color: #fff;
+}
+
+.pwa-text span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-pwa-install {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-pwa-dismiss {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 0.3rem;
 }
 
 .app-container {
@@ -239,19 +315,9 @@ body {
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #2563eb);
-  transform: translateY(-1px);
-}
-
 .btn-secondary {
   background: #334155;
   color: #f8fafc;
-}
-
-.btn-secondary:hover {
-  background: #475569;
-  transform: translateY(-1px);
 }
 
 .btn-outline {
@@ -260,14 +326,10 @@ body {
   color: var(--text-main);
 }
 
-.btn-outline:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
 /* Stats Summary Cards */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
 
@@ -307,12 +369,12 @@ body {
 }
 
 .stat-value {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #fff;
 }
 
-/* Control Card & Filters */
+/* Controls Card */
 .controls-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -334,7 +396,7 @@ body {
 .search-box {
   position: relative;
   flex: 1;
-  min-width: 280px;
+  min-width: 260px;
 }
 
 .search-box i {
@@ -354,19 +416,6 @@ body {
   color: #fff;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.2s;
-}
-
-.search-box input:focus {
-  border-color: var(--primary);
-}
-
-.sort-box {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
 }
 
 .sort-box select {
@@ -377,13 +426,14 @@ body {
   border-radius: 10px;
   font-size: 0.88rem;
   outline: none;
-  cursor: pointer;
 }
 
 .industry-tabs {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-btn {
@@ -394,23 +444,26 @@ body {
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab-btn:hover {
-  color: #fff;
-  border-color: #475569;
 }
 
 .tab-btn.active {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-/* Main Stock Table */
+/* View Section Control */
+.view-section {
+  display: none;
+}
+
+.view-section.active {
+  display: block;
+}
+
+/* Desktop Table View */
 .table-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -427,7 +480,6 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.92rem;
-  text-align: left;
 }
 
 .stock-table th {
@@ -450,36 +502,11 @@ body {
   white-space: nowrap;
 }
 
-.stock-table tbody tr {
-  transition: background 0.15s ease;
-}
-
-.stock-table tbody tr:hover {
-  filter: brightness(1.15);
-  background-color: rgba(255, 255, 255, 0.03) !important;
-}
-
-/* Category Specific Row Themes matching screenshot */
-tr.cat-晶圓代工 {
-  background-color: var(--cat-wafer-bg);
-  border-left: 4px solid var(--cat-wafer-border);
-}
-tr.cat-IC設計, tr.cat-軸承滑軌, tr.cat-半導體設備, tr.cat-半導體封測材料 {
-  background-color: var(--cat-semicon-bg);
-  border-left: 4px solid var(--cat-semicon-border);
-}
-tr.cat-塑膠 {
-  background-color: var(--cat-plastic-bg);
-  border-left: 4px solid var(--cat-plastic-border);
-}
-tr.cat-金融保險 {
-  background-color: var(--cat-finance-bg);
-  border-left: 4px solid var(--cat-finance-border);
-}
-tr.cat-生技股 {
-  background-color: var(--cat-biotech-bg);
-  border-left: 4px solid var(--cat-biotech-border);
-}
+tr.cat-晶圓代工 { background-color: var(--cat-wafer-bg); border-left: 4px solid var(--cat-wafer-border); }
+tr.cat-IC設計, tr.cat-軸承滑軌, tr.cat-半導體設備, tr.cat-半導體封測材料 { background-color: var(--cat-semicon-bg); border-left: 4px solid var(--cat-semicon-border); }
+tr.cat-塑膠 { background-color: var(--cat-plastic-bg); border-left: 4px solid var(--cat-plastic-border); }
+tr.cat-金融保險 { background-color: var(--cat-finance-bg); border-left: 4px solid var(--cat-finance-border); }
+tr.cat-生技股 { background-color: var(--cat-biotech-bg); border-left: 4px solid var(--cat-biotech-border); }
 
 .stock-badge {
   display: inline-flex;
@@ -495,10 +522,6 @@ tr.cat-生技股 {
   font-weight: 500;
 }
 
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-
-/* PE Badges */
 .pe-badge {
   display: inline-block;
   padding: 0.25rem 0.65rem;
@@ -508,61 +531,184 @@ tr.cat-生技股 {
   font-family: 'Outfit', monospace;
 }
 
-.pe-badge.low {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
+.pe-badge.low { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.pe-badge.mid { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+.pe-badge.high { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+.pe-badge.na { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+.pe-badge.cyan { background: rgba(14, 165, 233, 0.25); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.5); }
+
+/* MOBILE APP STOCK CARD UI */
+.mobile-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
 }
 
-.pe-badge.mid {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.4);
+.mobile-stock-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  position: relative;
+  transition: transform 0.2s, border-color 0.2s;
 }
 
-.pe-badge.high {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.4);
+.mobile-stock-card:active {
+  transform: scale(0.98);
 }
 
-.pe-badge.na {
-  background: rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+.m-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
-.pe-badge.cyan {
-  background: rgba(14, 165, 233, 0.25);
-  color: #38bdf8;
-  border: 1px solid rgba(14, 165, 233, 0.5);
+.m-stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
-.negative-eps {
-  color: #f87171;
+.m-stock-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.m-stock-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.m-stock-code {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: rgba(15, 23, 42, 0.6);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+
+.m-cat-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  align-self: flex-start;
+}
+
+.m-price-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.m-price-num {
+  font-family: 'Outfit', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.m-price-unit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.m-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  background: var(--bg-dark);
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.m-metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.m-metric-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.m-metric-val {
+  font-size: 0.88rem;
   font-weight: 600;
 }
 
-/* Actions in Table */
-.btn-icon {
+.m-pe-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.m-pe-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.m-pe-title {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.m-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.6rem;
+}
+
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-color);
+  padding: 0.4rem 1rem calc(0.4rem + env(safe-area-inset-bottom));
+  z-index: 900;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.nav-item {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 0.9rem;
-  padding: 0.35rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.75rem;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s;
+  transition: color 0.2s;
 }
 
-.btn-icon:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+.nav-item i {
+  font-size: 1.15rem;
 }
 
-.btn-icon.delete:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+.nav-item.active {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 /* Formula Card */
@@ -573,18 +719,9 @@ tr.cat-生技股 {
   padding: 1.25rem 1.5rem;
 }
 
-.formula-card h3 {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  color: #cbd5e1;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .formula-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
 }
 
@@ -605,27 +742,6 @@ tr.cat-生技股 {
   font-size: 0.9rem;
   color: var(--primary);
   margin-bottom: 0.5rem;
-}
-
-.formula-body code {
-  background: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.85rem;
-  display: inline-block;
-  margin-bottom: 0.5rem;
-}
-
-.formula-body p, .formula-body ul {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
-
-.formula-body ul {
-  padding-left: 1.2rem;
-  margin-top: 0.3rem;
 }
 
 /* Modal */
@@ -661,62 +777,63 @@ tr.cat-生技股 {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.25rem;
-}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+.btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+.form-group { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.form-group label { font-size: 0.82rem; color: var(--text-muted); }
+.form-group input { background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.55rem 0.75rem; color: #fff; outline: none; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; }
 
-.modal-header h3 {
-  font-size: 1.1rem;
-}
+/* MEDIA QUERIES FOR MOBILE APP UI */
+@media (max-width: 768px) {
+  body {
+    padding: 0.75rem;
+    padding-bottom: 5.5rem;
+  }
 
-.btn-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.5rem;
-  cursor: pointer;
-}
+  .desktop-only {
+    display: none !important;
+  }
 
-.btn-close:hover { color: #fff; }
+  .mobile-bottom-nav {
+    display: flex;
+  }
 
-.form-group {
-  margin-bottom: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
+  .app-header {
+    padding: 1rem;
+    border-radius: 12px;
+  }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
+  .app-header h1 {
+    font-size: 1.1rem;
+  }
 
-.form-group label {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
 
-.form-group input {
-  background: var(--bg-dark);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0.55rem 0.75rem;
-  color: #fff;
-  outline: none;
-  font-size: 0.9rem;
-}
+  .date-picker-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
 
-.form-group input:focus {
-  border-color: var(--primary);
-}
+  .search-box {
+    min-width: 100%;
+  }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sort-box {
+    justify-content: space-between;
+  }
+
+  .sort-box select {
+    flex: 1;
+  }
 }
