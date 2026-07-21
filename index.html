@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>台股本益比與預估本益比分析儀表板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-icon">
+          <i class="fa-solid fa-chart-trend-up"></i>
+        </div>
+        <div>
+          <h1>台股本益比與預估本益比分析儀表板</h1>
+          <p class="subtitle">動態選擇歷史交易日 ‧ 即時抓取台股數據 ‧ 自動計算目前與預估本益比倍數</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" id="btnAddStock">
+          <i class="fa-solid fa-plus"></i> 新增個股
+        </button>
+        <button class="btn btn-outline" id="btnExportCsv">
+          <i class="fa-solid fa-file-excel"></i> 匯出 CSV
+        </button>
+      </div>
+    </header>
+
+    <!-- Date Picker Bar -->
+    <section class="date-picker-card">
+      <div class="date-picker-row">
+        <div class="date-input-group">
+          <label for="datePicker"><i class="fa-regular fa-calendar-days"></i> 選擇歷史交易日期：</label>
+          <input type="date" id="datePicker" value="2026-07-17" max="2026-07-21">
+          <button class="btn btn-secondary" id="btnLoadDateData">
+            <i class="fa-solid fa-magnifying-glass-chart"></i> 查詢當日收盤價
+          </button>
+        </div>
+        <div class="date-shortcuts">
+          <span class="shortcut-label">快速切換：</span>
+          <button class="btn-chip active" id="btnDateSnapshot"><i class="fa-solid fa-image"></i> 圖片對照日 (2026/07/17)</button>
+          <button class="btn-chip" id="btnDateToday"><i class="fa-solid fa-clock"></i> 最新交易日</button>
+          <button class="btn-chip" id="btnDatePrevDay"><i class="fa-solid fa-backward-step"></i> 前一交易日</button>
+        </div>
+      </div>
+      <div class="date-status-bar">
+        <div class="status-chip" id="lastUpdateChip">
+          <span class="status-dot green"></span>
+          <span id="updateTime">已載入 2026/07/17 圖片對照日歷史股價與財報數據</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stat Summary Cards -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon yellow"><i class="fa-solid fa-cubes"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">追蹤股票筆數</span>
+          <span class="stat-value" id="statTotalCount">0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-calculator"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">平均已知本益比</span>
+          <span class="stat-value" id="statAvgKnownPe">--</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">平均預估本益比</span>
+          <span class="stat-value" id="statAvgEstPe">--</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fa-solid fa-award"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">最低預估本益比個股</span>
+          <span class="stat-value" id="statLowestEstPe">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Toolbar & Filters -->
+    <section class="controls-card">
+      <div class="search-filter-row">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="搜尋股票名稱或代號 (如 2330 或 台積電)...">
+        </div>
+        <div class="sort-box">
+          <label for="sortBySelect"><i class="fa-solid fa-arrow-down-short-wide"></i> 排序方式：</label>
+          <select id="sortBySelect">
+            <option value="default">預設排序 (原始對照組)</option>
+            <option value="estPeAsc">預估本益比 (低 $\rightarrow$ 高)</option>
+            <option value="estPeDesc">預估本益比 (高 $\rightarrow$ 低)</option>
+            <option value="currentMultipleAsc">目前EPS倍數 (低 $\rightarrow$ 高)</option>
+            <option value="knownPeAsc">已知本益比 (低 $\rightarrow$ 高)</option>
+            <option value="priceDesc">收盤價 (高 $\rightarrow$ 低)</option>
+            <option value="codeAsc">股票代號 (小 $\rightarrow$ 大)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="industry-tabs" id="industryTabs">
+        <!-- Dynamic tabs generated in JS -->
+      </div>
+    </section>
+
+    <!-- Main Data Table Container -->
+    <section class="table-card">
+      <div class="table-wrapper">
+        <table class="stock-table" id="stockTable">
+          <thead>
+            <tr>
+              <th class="col-industry">產業</th>
+              <th class="col-stock">熱門股</th>
+              <th class="col-eps text-right">2025年全年稅後EPS</th>
+              <th class="col-eps text-right">2026年第一季稅後EPS</th>
+              <th class="col-eps text-right">2026年第二季稅後EPS</th>
+              <th class="col-eps text-right highlight-col">近4季累計EPS (TTM)</th>
+              <th class="col-price text-right" id="priceHeaderDate">2026/07/17收盤價</th>
+              <th class="col-pe text-right">已知本益比</th>
+              <th class="col-pe text-right highlight-col">目前EPS倍數</th>
+              <th class="col-pe text-right">預估本益比</th>
+              <th class="col-actions text-center">操作</th>
+            </tr>
+          </thead>
+          <tbody id="stockTableBody">
+            <!-- Dynamic Rows rendered in JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Calculation Rules Explanation Footer -->
+    <footer class="formula-card">
+      <h3><i class="fa-solid fa-circle-info"></i> 本益比與股價倍數計算邏輯說明</h3>
+      <div class="formula-grid">
+        <div class="formula-item">
+          <div class="formula-title"><i class="fa-solid fa-book-bookmark"></i> 已知本益比 (Known P/E)</div>
+          <div class="formula-body">
+            <code>所選日期收盤價 ÷ 2025 全年稅後 EPS</code>
+            <p>※ 若 2025 EPS $\le 0$，表示公司虧損，本益比顯示為 <strong>NA</strong>。</p>
+          </div>
+        </div>
+        <div class="formula-item highlighted">
+          <div class="formula-title"><i class="fa-solid fa-fire-flame-curved"></i> 目前 EPS 倍數 (Current EPS Multiple)</div>
+          <div class="formula-body">
+            <code>最新收盤價 ÷ 近 4 季累計 EPS (TTM)</code>
+            <p>※ 代表「股價是目前最新近 4 個季度加總 EPS 的幾倍」，真實反應當前估值水準。</p>
+          </div>
+        </div>
+        <div class="formula-item">
+          <div class="formula-title"><i class="fa-solid fa-wand-magic-sparkles"></i> 預估本益比 (Estimated P/E)</div>
+          <div class="formula-body">
+            <code>最新收盤價 ÷ 預估全年稅後 EPS</code>
+            <p>※ 年化推估公式（根據最新已發布季報）：</p>
+            <ul>
+              <li><strong>僅公告 Q1</strong>：預估全年 EPS = <code>Q1 EPS × 4</code></li>
+              <li><strong>已公告至 Q2 累計</strong>：預估全年 EPS = <code>Q2 累計 EPS × 2</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal for Adding / Editing Stock -->
+  <div class="modal-backdrop" id="stockModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">新增股票資料</h3>
+        <button class="btn-close" id="btnCloseModal">&times;</button>
+      </div>
+      <form id="stockForm">
+        <input type="hidden" id="editStockId">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="inputCategory">產業類別</label>
+            <input type="text" id="inputCategory" placeholder="例：晶圓代工" required>
+          </div>
+          <div class="form-group">
+            <label for="inputCode">股票代號</label>
+            <input type="text" id="inputCode" placeholder="例：2330" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputName">股票名稱</label>
+          <input type="text" id="inputName" placeholder="例：台積電" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="inputEps2025">2025 全年 EPS</label>
+            <input type="number" step="0.01" id="inputEps2025" placeholder="例：66.25">
+          </div>
+          <div class="form-group">
+            <label for="inputEps2026Q1">2026 Q1 EPS</label>
+            <input type="number" step="0.01" id="inputEps2026Q1" placeholder="例：22.08">
+          </div>
+          <div class="form-group">
+            <label for="inputEps2026Q2">2026 Q2 累計 EPS</label>
+            <input type="number" step="0.01" id="inputEps2026Q2" placeholder="例：49.33">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputPrice">最新收盤價 (元)</label>
+          <input type="number" step="0.1" id="inputPrice" placeholder="例：2290.00" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelModal">取消</button>
+          <button type="submit" class="btn btn-primary">儲存資料</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
