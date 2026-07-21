@@ -1,0 +1,28 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "api/**",
+      "venv/**",
+      ".git/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/stocks",
+        "function": "stocks"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "python311"
+  }
+}
