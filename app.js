@@ -291,14 +291,6 @@ async function fetchStockData(dateStr, forceRefresh = false) {
     btn.disabled = false;
   }
 }
-  } catch (err) {
-    document.getElementById('updateTime').textContent = '載入失敗，請重試';
-    console.error(err);
-  } finally {
-    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i><span>查詢</span>';
-    btn.disabled = false;
-  }
-}
 
 /* ─── Modal ──────────────────────────────────────────────────────── */
 function openModal(stock = null) {
