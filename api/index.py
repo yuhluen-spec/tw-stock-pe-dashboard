@@ -1,9 +1,10 @@
-from http.server import BaseHTTPRequestHandler
+from flask import Flask, jsonify, request
 import urllib.request
 import urllib.parse
 import ssl
 import json
-import os
+
+app = Flask(__name__)
 
 STOCK_METADATA = [
     { 'code': '2303', 'name': '聯電', 'category': '晶圓代工' },
@@ -81,7 +82,7 @@ def derive_eps_from_finmind(stock_id, ctx):
                 'eps2026q2': eps2026q2 if eps2026q2 is not None else ref.get('eps2026q2'),
                 'epsTTM': eps_ttm if eps_ttm is not None else ref.get('epsTTM')
             }
-    except Exception as e:
+    except Exception:
         ref = EPS_DERIVED_MAP.get(stock_id, {})
         return {
             'eps2025': ref.get('eps2025'),
@@ -108,46 +109,41 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
                                 if p > 0: prices[code] = p
                             except ValueError:
                                 pass
-    except Exception as e:
+    except Exception:
         pass
     return prices
 
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        parsed_url = urllib.parse.urlparse(self.path)
-        params = urllib.parse.parse_qs(parsed_url.query)
-        date_param = params.get('date', ['2026-07-17'])[0]
-        date_yyyymmdd = date_param.replace('-', '')
+@app.route('/api/stocks', methods=['GET'])
+def get_stocks():
+    date_param = request.args.get('date', '2026-07-17')
+    date_yyyymmdd = date_param.replace('-', '')
+    
+    ctx = ssl._create_unverified_context()
+    live_prices = fetch_twse_prices(date_yyyymmdd, ctx)
+    
+    result_stocks = []
+    for item in STOCK_METADATA:
+        code = item['code']
+        price = live_prices.get(code, SNAPSHOT_PRICES_20260717.get(code, 100.0))
+        eps_data = derive_eps_from_finmind(code, ctx)
         
-        ctx = ssl._create_unverified_context()
-        live_prices = fetch_twse_prices(date_yyyymmdd, ctx)
-        
-        result_stocks = []
-        for item in STOCK_METADATA:
-            code = item['code']
-            price = live_prices.get(code, SNAPSHOT_PRICES_20260717.get(code, 100.0))
-            eps_data = derive_eps_from_finmind(code, ctx)
-            
-            result_stocks.append({
-                'id': code,
-                'category': item['category'],
-                'code': code,
-                'name': item['name'],
-                'eps2025': eps_data.get('eps2025'),
-                'eps2026q1': eps_data.get('eps2026q1'),
-                'eps2026q2': eps_data.get('eps2026q2'),
-                'epsTTM': eps_data.get('epsTTM'),
-                'price': price
-            })
+        result_stocks.append({
+            'id': code,
+            'category': item['category'],
+            'code': code,
+            'name': item['name'],
+            'eps2025': eps_data.get('eps2025'),
+            'eps2026q1': eps_data.get('eps2026q1'),
+            'eps2026q2': eps_data.get('eps2026q2'),
+            'epsTTM': eps_data.get('epsTTM'),
+            'price': price
+        })
 
-        resp_data = {
-            'status': 'ok',
-            'date': date_param,
-            'stocks': result_stocks
-        }
-        
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json; charset=utf-8')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(json.dumps(resp_data, ensure_ascii=False).encode('utf-8'))
+    return jsonify({
+        'status': 'ok',
+        'date': date_param,
+        'stocks': result_stocks
+    })
+
+if __name__ == '__main__':
+    app.run(port=8080)
