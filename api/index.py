@@ -1,10 +1,14 @@
-from flask import Flask, jsonify, request
+import os
+from flask import Flask, jsonify, request, send_from_directory
 import urllib.request
 import urllib.parse
 import ssl
 import json
 
 app = Flask(__name__)
+
+# Base directory for static files (parent of api folder)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 STOCK_METADATA = [
     { 'code': '2303', 'name': '聯電', 'category': '晶圓代工' },
@@ -113,6 +117,18 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
         pass
     return prices
 
+# Route for serving static frontend files
+@app.route('/')
+def serve_index():
+    return send_from_directory(BASE_DIR, 'index.html')
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    if os.path.exists(os.path.join(BASE_DIR, filename)):
+        return send_from_directory(BASE_DIR, filename)
+    return send_from_directory(BASE_DIR, 'index.html')
+
+# Route for stock API
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
     date_param = request.args.get('date', '2026-07-17')
