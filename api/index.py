@@ -12,7 +12,7 @@ app = Flask(__name__)
 # Base directory for static files
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Server-side Cache
+# Server-side Cache (Reset on startup)
 SERVER_CACHE = {}
 CACHE_TTL = 1800  # 30 minutes
 

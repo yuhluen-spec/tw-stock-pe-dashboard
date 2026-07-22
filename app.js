@@ -324,14 +324,27 @@ function updateKPIs(list) {
 }
 /* ─── LocalStorage Cache helpers ─────────────────────────────────── */
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const CACHE_PREFIX = 'tw_pe_';
+const CACHE_PREFIX = 'tw_pe_v4_';
 function cacheKey(dateStr) { return CACHE_PREFIX + dateStr; }
 function loadCache(dateStr) {
   try {
+    // Clear old legacy keys
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('tw_pe_') && !k.startsWith(CACHE_PREFIX)) {
+        localStorage.removeItem(k);
+      }
+    }
+
     const raw = localStorage.getItem(cacheKey(dateStr));
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (Date.now() - obj.ts > CACHE_TTL_MS) {
+      localStorage.removeItem(cacheKey(dateStr));
+      return null;
+    }
+    // Reject legacy large full-market caches (>60 stocks) so default remains ~18 stocks
+    if (Array.isArray(obj.data) && obj.data.length > 60) {
       localStorage.removeItem(cacheKey(dateStr));
       return null;
     }
