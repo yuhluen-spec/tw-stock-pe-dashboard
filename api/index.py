@@ -9,39 +9,38 @@ from flask import Flask, jsonify, request, send_from_directory
 
 app = Flask(__name__)
 
-# Base directory for static files (parent of api folder)
+# Base directory for static files
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Server-side Cache
 SERVER_CACHE = {}
 CACHE_TTL = 1800  # 30 minutes
 
-STOCK_METADATA = [
-    { 'code': '3010', 'name': '華立', 'category': '半導體材料', 'market': 'TWSE' },
-    { 'code': '2303', 'name': '聯電', 'category': '晶圓代工', 'market': 'TWSE' },
-    { 'code': '2330', 'name': '台積電', 'category': '晶圓代工', 'market': 'TWSE' },
-    { 'code': '5347', 'name': '世界先進', 'category': '晶圓代工', 'market': 'TPEX' },
-    { 'code': '5274', 'name': '信驊', 'category': 'IC設計', 'market': 'TPEX' },
-    { 'code': '2059', 'name': '川湖', 'category': '軸承/滑軌', 'market': 'TWSE' },
-    { 'code': '7769', 'name': '鴻勁', 'category': '半導體設備', 'market': 'TPEX' },
-    { 'code': '6515', 'name': '穎崴', 'category': '半導體封測材料', 'market': 'TWSE' },
-    { 'code': '6223', 'name': '旺矽', 'category': '半導體封測材料', 'market': 'TWSE' },
-    { 'code': '1301', 'name': '台塑', 'category': '塑膠', 'market': 'TWSE' },
-    { 'code': '1303', 'name': '南亞', 'category': '塑膠', 'market': 'TWSE' },
-    { 'code': '1326', 'name': '台化', 'category': '塑膠', 'market': 'TWSE' },
-    { 'code': '2881', 'name': '富邦金', 'category': '金融保險', 'market': 'TWSE' },
-    { 'code': '2882', 'name': '國泰金', 'category': '金融保險', 'market': 'TWSE' },
-    { 'code': '2891', 'name': '中信金', 'category': '金融保險', 'market': 'TWSE' },
-    { 'code': '6446', 'name': '藥華藥', 'category': '生技股', 'market': 'TPEX' },
-    { 'code': '6472', 'name': '保瑞', 'category': '生技股', 'market': 'TWSE' },
-    { 'code': '7799', 'name': '禾榮科', 'category': '生技股', 'market': 'TPEX' }
-]
-
-SNAPSHOT_PRICES_20260717 = {
-    '3010': 116.00, '2303': 144.00, '2330': 2290.00, '5347': 169.00, '5274': 12950.00,
-    '2059': 7890.00, '7769': 6070.00, '6515': 6055.00, '6223': 5600.00,
-    '1301': 62.80, '1303': 199.00, '1326': 66.10, '2881': 124.50,
-    '2882': 94.30, '2891': 62.10, '6446': 1195.00, '6472': 396.00, '7799': 415.50
+STOCK_CATEGORY_MAP = {
+    '2330': '晶圓代工', '2303': '晶圓代工', '5347': '晶圓代工', '3010': '半導體材料',
+    '3711': '半導體封測', '6515': '半導體封測材料', '6223': '半導體封測材料', '7769': '半導體設備',
+    '3583': '半導體設備', '3131': '半導體設備', '6187': '半導體設備', '2404': '無塵室工程',
+    '5483': '矽晶圓', '6488': '矽晶圓', '2454': 'IC設計', '5274': 'IC設計',
+    '2379': 'IC設計', '3034': 'IC設計', '3035': 'IP/IC設計', '3443': 'IP/IC設計',
+    '3661': 'IP/ASIC', '6533': 'RISC-V IP', '6415': '電源管理IC', '4966': '高速傳輸IC',
+    '3529': 'IP授權', '8054': 'ASIC/IC設計', '2317': '組裝代工', '2382': 'AI伺服器',
+    '3231': 'AI伺服器', '6669': 'AI伺服器', '2356': '電腦組裝', '2324': '電腦組裝',
+    '2376': '主機板/顯卡', '2377': '主機板/顯卡', '2357': '品牌電腦', '2395': '工業電腦',
+    '2308': '電源/綠能', '2059': '軸承/滑軌', '3533': '連接器/Socket', '3665': '線束/連接器',
+    '2383': 'CCL銅箔基板', '6274': 'CCL銅箔基板', '6213': 'CCL銅箔基板', '3037': 'ABF載板',
+    '8046': 'ABF載板', '3189': 'ABF載板', '2368': 'AI伺服器PCB', '3017': '散熱',
+    '3324': '散熱', '3008': '光學鏡頭', '3406': '光學鏡頭', '2327': '被動元件',
+    '2492': '被動元件', '2409': '面板', '3481': '面板', '2881': '金融保險',
+    '2882': '金融保險', '2891': '金融保險', '2886': '金融保險', '2884': '金融保險',
+    '2885': '金融保險', '2892': '金融保險', '2880': '金融保險', '2883': '金融保險',
+    '2887': '金融保險', '2890': '金融保險', '2801': '金融保險', '5880': '金融保險',
+    '5876': '金融保險', '1301': '塑膠石化', '1303': '塑膠石化', '1326': '塑膠石化',
+    '6505': '石化煉油', '1305': '塑膠石化', '2002': '鋼鐵', '1101': '水泥/綠能',
+    '1102': '水泥', '1216': '食品飲料', '2912': '百貨零售', '9910': '製鞋/傳統',
+    '9904': '製鞋/傳統', '2603': '航運', '2609': '航運', '2615': '航運',
+    '2618': '航空', '2610': '航空', '2201': '汽車', '2207': '汽車',
+    '6446': '生技股', '6472': '生技股', '7799': '生技股', '1795': '生技股',
+    '4147': '生技股', '2412': '電信', '3045': '電信', '4904': '電信'
 }
 
 EPS_DERIVED_MAP = {
@@ -108,7 +107,7 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
     url = f"https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date={date_yyyymmdd}&type=ALLBUT0999&response=json"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        with urllib.request.urlopen(req, context=ctx, timeout=3) as res:
+        with urllib.request.urlopen(req, context=ctx, timeout=4) as res:
             data = json.loads(res.read().decode('utf-8'))
             if data.get('stat') == 'OK':
                 for t in data.get('tables', []):
@@ -117,11 +116,12 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
                             code = str(row[0]).strip()
                             name = str(row[1]).strip()
                             price_str = str(row[8]).replace(',', '').strip()
-                            try:
-                                p = float(price_str)
-                                if p > 0: prices[code] = { 'price': p, 'name': name }
-                            except ValueError:
-                                pass
+                            if len(code) == 4 and code.isdigit():
+                                try:
+                                    p = float(price_str)
+                                    if p > 0: prices[code] = { 'code': code, 'name': name, 'price': p, 'market': 'TWSE' }
+                                except ValueError:
+                                    pass
     except Exception:
         pass
     return prices
@@ -135,19 +135,25 @@ def fetch_tpex_prices(date_param, ctx):
             roc_date = f"{roc_year}/{parts[1]}/{parts[2]}"
             url = f"https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&d={roc_date}&_={int(time.time()*1000)}"
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, context=ctx, timeout=3) as res:
+            with urllib.request.urlopen(req, context=ctx, timeout=4) as res:
                 data = json.loads(res.read().decode('utf-8'))
-                rows = data.get('aaData', [])
+                rows = []
+                if 'tables' in data and data['tables']:
+                    rows = data['tables'][0].get('data', [])
+                elif 'aaData' in data:
+                    rows = data.get('aaData', [])
+
                 for row in rows:
                     if len(row) >= 3:
                         code = str(row[0]).strip()
                         name = str(row[1]).strip()
                         price_str = str(row[2]).replace(',', '').strip()
-                        try:
-                            p = float(price_str)
-                            if p > 0: prices[code] = { 'price': p, 'name': name }
-                        except ValueError:
-                            pass
+                        if len(code) == 4 and code.isdigit():
+                            try:
+                                p = float(price_str)
+                                if p > 0: prices[code] = { 'code': code, 'name': name, 'price': p, 'market': 'TPEX' }
+                            except ValueError:
+                                pass
     except Exception:
         pass
     return prices
@@ -166,68 +172,77 @@ def serve_static(filename):
 def get_stocks():
     date_param = request.args.get('date', '2026-07-21')
     req_code = request.args.get('code')
+    force_refresh = request.args.get('force') == 'true'
     date_yyyymmdd = date_param.replace('-', '')
     
-    # Check Server-side Cache (only for full list requests)
+    # Check Server-side Cache
     now = time.time()
-    if not req_code and date_param in SERVER_CACHE:
+    if not req_code and not force_refresh and date_param in SERVER_CACHE:
         cached_entry = SERVER_CACHE[date_param]
         if now - cached_entry['ts'] < CACHE_TTL:
             return jsonify({
                 'status': 'ok',
                 'cached': True,
                 'date': date_param,
+                'total': len(cached_entry['stocks']),
                 'stocks': cached_entry['stocks']
             })
 
     ctx = ssl._create_unverified_context()
-    
-    # Determine target stocks
-    target_metadata = STOCK_METADATA
-    if req_code:
-        existing_meta = next((s for s in STOCK_METADATA if s['code'] == req_code), None)
-        if existing_meta:
-            target_metadata = [existing_meta]
-        else:
-            target_metadata = [{ 'code': req_code, 'name': req_code, 'category': '自訂個股', 'market': 'TWSE' }]
 
-    eps_results = {}
+    # Parallel Execution: Fetch TWSE (1000+ stocks) & TPEX (800+ stocks) simultaneously
     twse_prices = {}
     tpex_prices = {}
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         twse_future = executor.submit(fetch_twse_prices, date_yyyymmdd, ctx)
         tpex_future = executor.submit(fetch_tpex_prices, date_param, ctx)
-        eps_futures = [executor.submit(derive_eps_from_finmind, item['code'], ctx) for item in target_metadata]
 
         twse_prices = twse_future.result()
         tpex_prices = tpex_future.result()
 
-        for f in eps_futures:
-            code, eps_dict = f.result()
-            eps_results[code] = eps_dict
+    all_raw_stocks = {**twse_prices, **tpex_prices}
 
-    live_info = {**twse_prices, **tpex_prices}
+    # If single code requested
+    if req_code:
+        single_item = all_raw_stocks.get(req_code)
+        target_codes = [req_code]
+    else:
+        target_codes = list(all_raw_stocks.keys())
+
+    # Parallel EPS derivation for EPS-mapped / tracked stocks
+    tracked_eps_codes = [c for c in target_codes if c in EPS_DERIVED_MAP or c in STOCK_CATEGORY_MAP]
+    eps_results = {}
+
+    if tracked_eps_codes:
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            eps_futures = [executor.submit(derive_eps_from_finmind, c, ctx) for c in tracked_eps_codes]
+            for f in eps_futures:
+                code, eps_dict = f.result()
+                eps_results[code] = eps_dict
 
     result_stocks = []
-    for item in target_metadata:
-        code = item['code']
-        live_item = live_info.get(code, {})
-        price = live_item.get('price', SNAPSHOT_PRICES_20260717.get(code, 100.0))
-        official_name = live_item.get('name', item['name'])
+    for code in target_codes:
+        raw_info = all_raw_stocks.get(code, {})
+        name = raw_info.get('name', code)
+        price = raw_info.get('price', 100.0)
+        category = STOCK_CATEGORY_MAP.get(code, '台股個股')
         eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
 
         result_stocks.append({
             'id': code,
-            'category': item['category'],
+            'category': category,
             'code': code,
-            'name': official_name,
+            'name': name,
             'eps2025': eps_data.get('eps2025'),
             'eps2026q1': eps_data.get('eps2026q1'),
             'eps2026q2': eps_data.get('eps2026q2'),
             'epsTTM': eps_data.get('epsTTM'),
             'price': price
         })
+
+    # Sort stock list: tracked stocks first, then by code ascending
+    result_stocks.sort(key=lambda s: (0 if s['code'] in STOCK_CATEGORY_MAP else 1, s['code']))
 
     if not req_code:
         SERVER_CACHE[date_param] = {
@@ -239,6 +254,7 @@ def get_stocks():
         'status': 'ok',
         'cached': False,
         'date': date_param,
+        'total': len(result_stocks),
         'stocks': result_stocks
     })
 

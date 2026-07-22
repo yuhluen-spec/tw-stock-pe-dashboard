@@ -285,10 +285,18 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: filter 0.18s;
+  transition: all 0.18s;
   white-space: nowrap;
 }
 .query-btn:hover { filter: brightness(1.12); }
+
+.update-all-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+.update-all-btn:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 12px rgba(16,185,129,0.4);
+}
 
 .shortcut-chips {
   display: flex;
