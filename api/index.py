@@ -115,10 +115,11 @@ def fetch_twse_prices(date_yyyymmdd, ctx):
                     for row in t.get('data', []):
                         if len(row) >= 9:
                             code = str(row[0]).strip()
+                            name = str(row[1]).strip()
                             price_str = str(row[8]).replace(',', '').strip()
                             try:
                                 p = float(price_str)
-                                if p > 0: prices[code] = p
+                                if p > 0: prices[code] = { 'price': p, 'name': name }
                             except ValueError:
                                 pass
     except Exception:
@@ -140,10 +141,11 @@ def fetch_tpex_prices(date_param, ctx):
                 for row in rows:
                     if len(row) >= 3:
                         code = str(row[0]).strip()
+                        name = str(row[1]).strip()
                         price_str = str(row[2]).replace(',', '').strip()
                         try:
                             p = float(price_str)
-                            if p > 0: prices[code] = p
+                            if p > 0: prices[code] = { 'price': p, 'name': name }
                         except ValueError:
                             pass
     except Exception:
@@ -183,7 +185,6 @@ def get_stocks():
     # Determine target stocks
     target_metadata = STOCK_METADATA
     if req_code:
-        # Dynamic single stock request
         existing_meta = next((s for s in STOCK_METADATA if s['code'] == req_code), None)
         if existing_meta:
             target_metadata = [existing_meta]
@@ -206,19 +207,21 @@ def get_stocks():
             code, eps_dict = f.result()
             eps_results[code] = eps_dict
 
-    live_prices = {**twse_prices, **tpex_prices}
+    live_info = {**twse_prices, **tpex_prices}
 
     result_stocks = []
     for item in target_metadata:
         code = item['code']
-        price = live_prices.get(code, SNAPSHOT_PRICES_20260717.get(code, 100.0))
+        live_item = live_info.get(code, {})
+        price = live_item.get('price', SNAPSHOT_PRICES_20260717.get(code, 100.0))
+        official_name = live_item.get('name', item['name'])
         eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
 
         result_stocks.append({
             'id': code,
             'category': item['category'],
             'code': code,
-            'name': item['name'],
+            'name': official_name,
             'eps2025': eps_data.get('eps2025'),
             'eps2026q1': eps_data.get('eps2026q1'),
             'eps2026q2': eps_data.get('eps2026q2'),
