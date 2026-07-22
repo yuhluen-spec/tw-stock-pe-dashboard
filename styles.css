@@ -298,6 +298,37 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   box-shadow: 0 0 12px rgba(16,185,129,0.4);
 }
 
+.update-sidebar-btn {
+  background: rgba(16,185,129,0.15) !important;
+  border-color: rgba(16,185,129,0.4) !important;
+  color: #34d399 !important;
+}
+.update-sidebar-btn:hover {
+  background: rgba(16,185,129,0.25) !important;
+  color: #fff !important;
+}
+
+.topbar-btn-update {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+}
+.topbar-btn-update:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 12px rgba(16,185,129,0.5);
+}
+
 .shortcut-chips {
   display: flex;
   gap: 0.4rem;
