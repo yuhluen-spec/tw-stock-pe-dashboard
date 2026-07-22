@@ -16,31 +16,22 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SERVER_CACHE = {}
 CACHE_TTL = 1800  # 30 minutes
 
+# Core default tracked stocks (~18 stocks)
+DEFAULT_CORE_CODES = [
+    '3010', '2303', '2330', '5347', '5274', '2059', '7769', '6515',
+    '6223', '1301', '1303', '1326', '2881', '2882', '2891', '6446',
+    '6472', '7799'
+]
+
 STOCK_CATEGORY_MAP = {
-    '2330': '晶圓代工', '2303': '晶圓代工', '5347': '晶圓代工', '3010': '半導體材料',
-    '3711': '半導體封測', '6515': '半導體封測材料', '6223': '半導體封測材料', '7769': '半導體設備',
-    '3583': '半導體設備', '3131': '半導體設備', '6187': '半導體設備', '2404': '無塵室工程',
-    '5483': '矽晶圓', '6488': '矽晶圓', '2454': 'IC設計', '5274': 'IC設計',
-    '2379': 'IC設計', '3034': 'IC設計', '3035': 'IP/IC設計', '3443': 'IP/IC設計',
-    '3661': 'IP/ASIC', '6533': 'RISC-V IP', '6415': '電源管理IC', '4966': '高速傳輸IC',
-    '3529': 'IP授權', '8054': 'ASIC/IC設計', '2317': '組裝代工', '2382': 'AI伺服器',
-    '3231': 'AI伺服器', '6669': 'AI伺服器', '2356': '電腦組裝', '2324': '電腦組裝',
-    '2376': '主機板/顯卡', '2377': '主機板/顯卡', '2357': '品牌電腦', '2395': '工業電腦',
-    '2308': '電源/綠能', '2059': '軸承/滑軌', '3533': '連接器/Socket', '3665': '線束/連接器',
-    '2383': 'CCL銅箔基板', '6274': 'CCL銅箔基板', '6213': 'CCL銅箔基板', '3037': 'ABF載板',
-    '8046': 'ABF載板', '3189': 'ABF載板', '2368': 'AI伺服器PCB', '3017': '散熱',
-    '3324': '散熱', '3008': '光學鏡頭', '3406': '光學鏡頭', '2327': '被動元件',
-    '2492': '被動元件', '2409': '面板', '3481': '面板', '2881': '金融保險',
-    '2882': '金融保險', '2891': '金融保險', '2886': '金融保險', '2884': '金融保險',
-    '2885': '金融保險', '2892': '金融保險', '2880': '金融保險', '2883': '金融保險',
-    '2887': '金融保險', '2890': '金融保險', '2801': '金融保險', '5880': '金融保險',
-    '5876': '金融保險', '1301': '塑膠石化', '1303': '塑膠石化', '1326': '塑膠石化',
-    '6505': '石化煉油', '1305': '塑膠石化', '2002': '鋼鐵', '1101': '水泥/綠能',
-    '1102': '水泥', '1216': '食品飲料', '2912': '百貨零售', '9910': '製鞋/傳統',
-    '9904': '製鞋/傳統', '2603': '航運', '2609': '航運', '2615': '航運',
-    '2618': '航空', '2610': '航空', '2201': '汽車', '2207': '汽車',
-    '6446': '生技股', '6472': '生技股', '7799': '生技股', '1795': '生技股',
-    '4147': '生技股', '2412': '電信', '3045': '電信', '4904': '電信'
+    '3010': '半導體材料', '2303': '晶圓代工', '2330': '晶圓代工', '5347': '晶圓代工',
+    '5274': 'IC設計', '2059': '軸承/滑軌', '7769': '半導體設備', '6515': '半導體封測材料',
+    '6223': '半導體封測材料', '1301': '塑膠石化', '1303': '塑膠石化', '1326': '塑膠石化',
+    '2881': '金融保險', '2882': '金融保險', '2891': '金融保險', '6446': '生技股',
+    '6472': '生技股', '7799': '生技股', '2317': '組裝代工', '2382': 'AI伺服器',
+    '3231': 'AI伺服器', '6669': 'AI伺服器', '2454': 'IC設計', '2379': 'IC設計',
+    '3034': 'IC設計', '3443': 'IP/IC設計', '3661': 'IP/ASIC', '2383': 'CCL銅箔基板',
+    '6274': 'CCL銅箔基板', '3665': '線束/連接器', '3037': 'ABF載板', '8046': 'ABF載板'
 }
 
 EPS_DERIVED_MAP = {
@@ -62,6 +53,13 @@ EPS_DERIVED_MAP = {
     '6446': { 'eps2025': 13.64, 'eps2026q1': 5.79, 'eps2026q2': None, 'epsTTM': 16.50 },
     '6472': { 'eps2025': 23.90, 'eps2026q1': 0.20, 'eps2026q2': None, 'epsTTM': 24.10 },
     '7799': { 'eps2025': -3.31, 'eps2026q1': -0.37, 'eps2026q2': None, 'epsTTM': -3.00 }
+}
+
+SNAPSHOT_PRICES = {
+    '3010': 116.00, '2303': 144.00, '2330': 2290.00, '5347': 169.00, '5274': 12950.00,
+    '2059': 7890.00, '7769': 6070.00, '6515': 6055.00, '6223': 5600.00, '1301': 62.80,
+    '1303': 199.00, '1326': 66.10, '2881': 124.50, '2882': 94.30, '2891': 62.10,
+    '6446': 1195.00, '6472': 396.00, '7799': 415.50
 }
 
 def derive_eps_from_finmind(stock_id, ctx):
@@ -172,13 +170,15 @@ def serve_static(filename):
 def get_stocks():
     date_param = request.args.get('date', '2026-07-21')
     req_code = request.args.get('code')
+    req_all = request.args.get('all') == 'true'
     force_refresh = request.args.get('force') == 'true'
     date_yyyymmdd = date_param.replace('-', '')
     
     # Check Server-side Cache
     now = time.time()
-    if not req_code and not force_refresh and date_param in SERVER_CACHE:
-        cached_entry = SERVER_CACHE[date_param]
+    cache_key = f"{date_param}_{req_code or ('all' if req_all else 'default')}"
+    if not force_refresh and cache_key in SERVER_CACHE:
+        cached_entry = SERVER_CACHE[cache_key]
         if now - cached_entry['ts'] < CACHE_TTL:
             return jsonify({
                 'status': 'ok',
@@ -190,10 +190,7 @@ def get_stocks():
 
     ctx = ssl._create_unverified_context()
 
-    # Parallel Execution: Fetch TWSE (1000+ stocks) & TPEX (800+ stocks) simultaneously
-    twse_prices = {}
-    tpex_prices = {}
-
+    # Parallel Execution: Fetch TWSE & TPEX prices
     with ThreadPoolExecutor(max_workers=5) as executor:
         twse_future = executor.submit(fetch_twse_prices, date_yyyymmdd, ctx)
         tpex_future = executor.submit(fetch_tpex_prices, date_param, ctx)
@@ -203,29 +200,28 @@ def get_stocks():
 
     all_raw_stocks = {**twse_prices, **tpex_prices}
 
-    # If single code requested
+    # Determine target stock codes
     if req_code:
-        single_item = all_raw_stocks.get(req_code)
         target_codes = [req_code]
-    else:
+    elif req_all:
         target_codes = list(all_raw_stocks.keys())
+    else:
+        # DEFAULT: Return ONLY core default tracked stocks (~18 stocks)!
+        target_codes = DEFAULT_CORE_CODES
 
-    # Parallel EPS derivation for EPS-mapped / tracked stocks
-    tracked_eps_codes = [c for c in target_codes if c in EPS_DERIVED_MAP or c in STOCK_CATEGORY_MAP]
+    # Parallel EPS derivation for target stocks
     eps_results = {}
-
-    if tracked_eps_codes:
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            eps_futures = [executor.submit(derive_eps_from_finmind, c, ctx) for c in tracked_eps_codes]
-            for f in eps_futures:
-                code, eps_dict = f.result()
-                eps_results[code] = eps_dict
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        eps_futures = [executor.submit(derive_eps_from_finmind, c, ctx) for c in target_codes]
+        for f in eps_futures:
+            code, eps_dict = f.result()
+            eps_results[code] = eps_dict
 
     result_stocks = []
     for code in target_codes:
         raw_info = all_raw_stocks.get(code, {})
         name = raw_info.get('name', code)
-        price = raw_info.get('price', 100.0)
+        price = raw_info.get('price', SNAPSHOT_PRICES.get(code, 100.0))
         category = STOCK_CATEGORY_MAP.get(code, '台股個股')
         eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
 
@@ -241,14 +237,10 @@ def get_stocks():
             'price': price
         })
 
-    # Sort stock list: tracked stocks first, then by code ascending
-    result_stocks.sort(key=lambda s: (0 if s['code'] in STOCK_CATEGORY_MAP else 1, s['code']))
-
-    if not req_code:
-        SERVER_CACHE[date_param] = {
-            'ts': now,
-            'stocks': result_stocks
-        }
+    SERVER_CACHE[cache_key] = {
+        'ts': now,
+        'stocks': result_stocks
+    }
 
     return jsonify({
         'status': 'ok',

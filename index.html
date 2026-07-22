@@ -69,7 +69,7 @@
           <i class="fa-solid fa-plus"></i> 新增個股
         </button>
         <button class="sidebar-btn update-sidebar-btn" id="sidebarBtnUpdateAll" onclick="forceUpdateAllStocks()">
-          <i class="fa-solid fa-rotate"></i> 更新全台股資料
+          <i class="fa-solid fa-rotate"></i> 更新個股最新價格
         </button>
         <button class="sidebar-btn" id="sidebarBtnExport">
           <i class="fa-solid fa-file-arrow-down"></i> 匯出 CSV
@@ -305,9 +305,13 @@
           <i class="fa-solid fa-magnifying-glass"></i> 輸入股票代號或名稱（自動帶出前 7 筆）：
         </label>
         <div class="modal-search-wrap">
-          <input type="text" id="modalStockSearch" placeholder="例：2317、鴻海、聯發科、廣達、長榮..." autocomplete="off">
+          <input type="text" id="modalStockSearch" placeholder="例：2317、鴻海、聯發科、2383、3665..." autocomplete="off">
           <i class="fa-solid fa-spinner fa-spin search-spinner" id="modalSearchSpinner" style="display:none"></i>
         </div>
+
+        <button type="button" class="query-btn update-all-btn" id="btnSearchLiveStock" onclick="fetchLiveStockInModal()" style="margin-top:0.6rem;width:100%;justify-content:center;padding:0.5rem;font-size:0.82rem;">
+          <i class="fa-solid fa-bolt"></i> <span>線上即時連線抓取股票資料 (證交所/櫃買中心)</span>
+        </button>
 
         <!-- Dynamic Suggestions Box (Top 7 Matches) -->
         <div class="suggestions-box" id="suggestionsBox" style="display:none">
