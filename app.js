@@ -2,13 +2,7 @@
 
 
 
-
-
-
 const CAT_META = {
-
-
-
 
 
 
@@ -16,13 +10,7 @@ const CAT_META = {
 
 
 
-
-
-
   'IC設計':       { cls: 'row-ic',      color: '#22c55e', bg: 'rgba(34,197,94,0.18)',   label: 'IC設計' },
-
-
-
 
 
 
@@ -30,13 +18,7 @@ const CAT_META = {
 
 
 
-
-
-
   '半導體封測材料':{ cls: 'row-ic',     color: '#22c55e', bg: 'rgba(34,197,94,0.18)',   label: '封測' },
-
-
-
 
 
 
@@ -44,13 +26,7 @@ const CAT_META = {
 
 
 
-
-
-
   '軸承/滑軌':    { cls: 'row-mech',    color: '#f97316', bg: 'rgba(249,115,22,0.18)',  label: '機械' },
-
-
-
 
 
 
@@ -58,20 +34,11 @@ const CAT_META = {
 
 
 
-
-
-
   '金融保險':     { cls: 'row-finance', color: '#38bdf8', bg: 'rgba(56,189,248,0.18)',  label: '金融' },
 
 
 
-
-
-
   '生技股':       { cls: 'row-biotech', color: '#a855f7', bg: 'rgba(168,85,247,0.18)',  label: '生技' },
-
-
-
 
 
 
@@ -83,16 +50,7 @@ const CAT_META = {
 
 
 
-
-
-
-
-
-
 function getCatMeta(cat) {
-
-
-
 
 
 
@@ -100,16 +58,7 @@ function getCatMeta(cat) {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -121,97 +70,49 @@ function getCatMeta(cat) {
 
 
 
-
-
-
 const TW_STOCK_MASTER = [
-
-
-
 
 
   // ── 半導體 & 晶圓代工 & 封測/材料 ──
 
 
-
-
-
   { code: '2330', name: '台積電', category: '晶圓代工' },
-
-
-
 
 
   { code: '2303', name: '聯電', category: '晶圓代工' },
 
 
-
-
-
   { code: '5347', name: '世界先進', category: '晶圓代工' },
-
-
-
 
 
   { code: '3010', name: '華立', category: '半導體材料' },
 
 
-
-
-
   { code: '3711', name: '日月光投控', category: '半導體封測' },
-
-
-
 
 
   { code: '6515', name: '穎崴', category: '半導體封測材料' },
 
 
-
-
-
   { code: '6223', name: '旺矽', category: '半導體封測材料' },
-
-
-
 
 
   { code: '7769', name: '鴻勁', category: '半導體設備' },
 
 
-
-
-
   { code: '3583', name: '辛耘', category: '半導體設備' },
-
-
-
 
 
   { code: '3131', name: '弘塑', category: '半導體設備' },
 
 
-
-
-
   { code: '6187', name: '萬潤', category: '半導體設備' },
-
-
-
 
 
   { code: '2404', name: '漢唐', category: '無塵室工程' },
 
 
-
-
-
   { code: '5483', name: '中美晶', category: '矽晶圓' },
-
-
-
 
 
   { code: '6488', name: '環球晶', category: '矽晶圓' },
@@ -220,82 +121,40 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── IC 設計 & IP ──
-
-
-
 
 
   { code: '2454', name: '聯發科', category: 'IC設計' },
 
 
-
-
-
   { code: '5274', name: '信驊', category: 'IC設計' },
-
-
-
 
 
   { code: '2379', name: '瑞昱', category: 'IC設計' },
 
 
-
-
-
   { code: '3034', name: '聯詠', category: 'IC設計' },
-
-
-
 
 
   { code: '3035', name: '智原', category: 'IP/IC設計' },
 
 
-
-
-
   { code: '3443', name: '創意', category: 'IP/IC設計' },
-
-
-
 
 
   { code: '3661', name: '世芯-KY', category: 'IP/ASIC' },
 
 
-
-
-
   { code: '6533', name: '晶心科', category: 'RISC-V IP' },
-
-
-
 
 
   { code: '6415', name: '矽力*-KY', category: '電源管理IC' },
 
 
-
-
-
   { code: '4966', name: '譜瑞-KY', category: '高速傳輸IC' },
 
 
-
-
-
   { code: '3529', name: '力旺', category: 'IP授權' },
-
-
-
 
 
   { code: '8054', name: '安國', category: 'ASIC/IC設計' },
@@ -304,160 +163,79 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── AI伺服器 & 電腦 & 零組件 ──
-
-
-
 
 
   { code: '2317', name: '鴻海', category: '組裝代工' },
 
 
-
-
-
   { code: '2382', name: '廣達', category: 'AI伺服器' },
-
-
-
 
 
   { code: '3231', name: '緯創', category: 'AI伺服器' },
 
 
-
-
-
   { code: '6669', name: '緯穎', category: 'AI伺服器' },
-
-
-
 
 
   { code: '2356', name: '英業達', category: '電腦組裝' },
 
 
-
-
-
   { code: '2324', name: '仁寶', category: '電腦組裝' },
-
-
-
 
 
   { code: '2376', name: '技嘉', category: '主機板/顯卡' },
 
 
-
-
-
   { code: '2377', name: '微星', category: '主機板/顯卡' },
-
-
-
 
 
   { code: '2357', name: '華碩', category: '品牌電腦' },
 
 
-
-
-
   { code: '2395', name: '研華', category: '工業電腦' },
-
-
-
 
 
   { code: '2308', name: '台達電', category: '電源/綠能' },
 
 
-
-
-
   { code: '2059', name: '川湖', category: '軸承/滑軌' },
-
-
-
 
 
   { code: '3533', name: '嘉澤', category: '連接器/Socket' },
 
 
-
-
-
   { code: '3665', name: '貿聯-KY', category: '線束/連接器' },
-
-
-
 
 
   { code: '2383', name: '台光電', category: 'CCL銅箔基板' },
 
 
-
-
-
   { code: '6274', name: '台燿', category: 'CCL銅箔基板' },
-
-
-
 
 
   { code: '6213', name: '聯茂', category: 'CCL銅箔基板' },
 
 
-
-
-
   { code: '3037', name: '欣興', category: 'ABF載板' },
-
-
-
 
 
   { code: '8046', name: '南電', category: 'ABF載板' },
 
 
-
-
-
   { code: '3189', name: '景碩', category: 'ABF載板' },
-
-
-
 
 
   { code: '2368', name: '金像電', category: 'AI伺服器PCB' },
 
 
-
-
-
   { code: '3017', name: '奇鋐', category: '散熱' },
-
-
-
 
 
   { code: '3324', name: '雙鴻', category: '散熱' },
 
 
-
-
-
   { code: '3008', name: '大立光', category: '光學鏡頭' },
-
-
-
 
 
   { code: '3406', name: '玉晶光', category: '光學鏡頭' },
@@ -466,34 +244,16 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── 被動元件 & 面板 & 被動 ──
-
-
-
 
 
   { code: '2327', name: '國巨', category: '被動元件' },
 
 
-
-
-
   { code: '2492', name: '華新科', category: '被動元件' },
 
 
-
-
-
   { code: '2409', name: '友達', category: '面板' },
-
-
-
 
 
   { code: '3481', name: '群創', category: '面板' },
@@ -502,94 +262,46 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── 金融保險 ──
-
-
-
 
 
   { code: '2881', name: '富邦金', category: '金融保險' },
 
 
-
-
-
   { code: '2882', name: '國泰金', category: '金融保險' },
-
-
-
 
 
   { code: '2891', name: '中信金', category: '金融保險' },
 
 
-
-
-
   { code: '2886', name: '兆豐金', category: '金融保險' },
-
-
-
 
 
   { code: '2884', name: '玉山金', category: '金融保險' },
 
 
-
-
-
   { code: '2885', name: '元大金', category: '金融保險' },
-
-
-
 
 
   { code: '2892', name: '第一金', category: '金融保險' },
 
 
-
-
-
   { code: '2880', name: '華南金', category: '金融保險' },
-
-
-
 
 
   { code: '2883', name: '開發金', category: '金融保險' },
 
 
-
-
-
   { code: '2887', name: '台新金', category: '金融保險' },
-
-
-
 
 
   { code: '2890', name: '永豐金', category: '金融保險' },
 
 
-
-
-
   { code: '2801', name: '彰銀', category: '金融保險' },
 
 
-
-
-
   { code: '5880', name: '合庫金', category: '金融保險' },
-
-
-
 
 
   { code: '5876', name: '上海商銀', category: '金融保險' },
@@ -598,82 +310,40 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── 塑膠 & 石化 & 傳統製造 ──
-
-
-
 
 
   { code: '1301', name: '台塑', category: '塑膠石化' },
 
 
-
-
-
   { code: '1303', name: '南亞', category: '塑膠石化' },
-
-
-
 
 
   { code: '1326', name: '台化', category: '塑膠石化' },
 
 
-
-
-
   { code: '6505', name: '台塑化', category: '石化煉油' },
-
-
-
 
 
   { code: '1305', name: '華夏', category: '塑膠石化' },
 
 
-
-
-
   { code: '2002', name: '中鋼', category: '鋼鐵' },
-
-
-
 
 
   { code: '1101', name: '台泥', category: '水泥/綠能' },
 
 
-
-
-
   { code: '1102', name: '亞泥', category: '水泥' },
-
-
-
 
 
   { code: '1216', name: '統一', category: '食品飲料' },
 
 
-
-
-
   { code: '2912', name: '統一超', category: '百貨零售' },
 
 
-
-
-
   { code: '9910', name: '豐泰', category: '製鞋/傳統' },
-
-
-
 
 
   { code: '9904', name: '寶成', category: '製鞋/傳統' },
@@ -682,52 +352,25 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── 航運 & 交通 & 綠能 ──
-
-
-
 
 
   { code: '2603', name: '長榮', category: '航運' },
 
 
-
-
-
   { code: '2609', name: '陽明', category: '航運' },
-
-
-
 
 
   { code: '2615', name: '萬海', category: '航運' },
 
 
-
-
-
   { code: '2618', name: '長榮航', category: '航空' },
-
-
-
 
 
   { code: '2610', name: '華航', category: '航空' },
 
 
-
-
-
   { code: '2201', name: '裕隆', category: '汽車' },
-
-
-
 
 
   { code: '2207', name: '和泰車', category: '汽車' },
@@ -736,40 +379,19 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── 生技醫療 ──
-
-
-
 
 
   { code: '6446', name: '藥華藥', category: '生技股' },
 
 
-
-
-
   { code: '6472', name: '保瑞', category: '生技股' },
-
-
-
 
 
   { code: '7799', name: '禾榮科', category: '生技股' },
 
 
-
-
-
   { code: '1795', name: '美時', category: '生技股' },
-
-
-
 
 
   { code: '4147', name: '中裕', category: '生技股' },
@@ -778,73 +400,34 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
-
-
-
   // ── 電信 & ETF ──
-
-
-
 
 
   { code: '2412', name: '中華電', category: '電信' },
 
 
-
-
-
   { code: '3045', name: '台灣大', category: '電信' },
-
-
-
 
 
   { code: '4904', name: '遠傳', category: '電信' },
 
 
-
-
-
   { code: '0050', name: '元大台灣50', category: 'ETF' },
-
-
-
 
 
   { code: '0056', name: '元大高股息', category: 'ETF' },
 
 
-
-
-
   { code: '00878', name: '國泰永續高股息', category: 'ETF' },
-
-
-
 
 
   { code: '00919', name: '群益台灣精選高息', category: 'ETF' },
 
 
-
-
-
   { code: '00940', name: '元大台灣價值高息', category: 'ETF' }
 
 
-
-
-
 ];
-
-
-
-
-
-
 
 
 
@@ -856,20 +439,11 @@ const TW_STOCK_MASTER = [
 
 
 
-
-
-
 let stockList = [];
 
 
 
-
-
-
 let activeCategory = 'ALL';
-
-
-
 
 
 
@@ -881,16 +455,7 @@ let deferredPwaPrompt = null;
 
 
 
-
-
-
-
-
-
 /* ─── Custom User Stocks Persistence ──────────────────────────────── */
-
-
-
 
 
 
@@ -902,16 +467,7 @@ const CUSTOM_STOCKS_KEY = 'tw_pe_custom_user_stocks';
 
 
 
-
-
-
-
-
-
 function loadCustomStocks() {
-
-
-
 
 
 
@@ -919,13 +475,7 @@ function loadCustomStocks() {
 
 
 
-
-
-
     const raw = localStorage.getItem(CUSTOM_STOCKS_KEY);
-
-
-
 
 
 
@@ -933,23 +483,11 @@ function loadCustomStocks() {
 
 
 
-
-
-
   } catch { return []; }
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -961,13 +499,7 @@ function saveCustomStocks(customList) {
 
 
 
-
-
-
   try {
-
-
-
 
 
 
@@ -975,23 +507,11 @@ function saveCustomStocks(customList) {
 
 
 
-
-
-
   } catch {}
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1003,13 +523,7 @@ function mergeCustomStocks(fetchedList) {
 
 
 
-
-
-
   const customStocks = loadCustomStocks();
-
-
-
 
 
 
@@ -1021,16 +535,7 @@ function mergeCustomStocks(fetchedList) {
 
 
 
-
-
-
-
-
-
   const resultMap = new Map(fetchedList.map(s => [s.id, s]));
-
-
-
 
 
 
@@ -1038,23 +543,11 @@ function mergeCustomStocks(fetchedList) {
 
 
 
-
-
-
     resultMap.set(custom.id, { ...resultMap.get(custom.id), ...custom });
 
 
 
-
-
-
   });
-
-
-
-
-
-
 
 
 
@@ -1066,16 +559,7 @@ function mergeCustomStocks(fetchedList) {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1087,13 +571,7 @@ function mergeCustomStocks(fetchedList) {
 
 
 
-
-
-
 if ('serviceWorker' in navigator) {
-
-
-
 
 
 
@@ -1101,13 +579,7 @@ if ('serviceWorker' in navigator) {
 
 
 
-
-
-
     navigator.serviceWorker.register('/sw.js').catch(console.error);
-
-
-
 
 
 
@@ -1115,13 +587,7 @@ if ('serviceWorker' in navigator) {
 
 
 
-
-
-
 }
-
-
-
 
 
 
@@ -1129,13 +595,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 
 
-
-
-
   e.preventDefault();
-
-
-
 
 
 
@@ -1143,13 +603,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 
 
-
-
-
   document.getElementById('pwaInstallBanner')?.classList.add('show');
-
-
-
 
 
 
@@ -1161,16 +615,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 
 
-
-
-
-
-
-
 /* ─── Math helpers ───────────────────────────────────────────────── */
-
-
-
 
 
 
@@ -1178,13 +623,7 @@ function calcKnownPE(price, eps2025) {
 
 
 
-
-
-
   if (!eps2025 || eps2025 <= 0) return null;
-
-
-
 
 
 
@@ -1192,16 +631,7 @@ function calcKnownPE(price, eps2025) {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1213,13 +643,7 @@ function calcCurrentMultiple(price, epsTTM) {
 
 
 
-
-
-
   if (!epsTTM || epsTTM <= 0) return null;
-
-
-
 
 
 
@@ -1227,16 +651,7 @@ function calcCurrentMultiple(price, epsTTM) {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1248,13 +663,7 @@ function calcEstPE(price, q1, q2) {
 
 
 
-
-
-
   let estEps = null;
-
-
-
 
 
 
@@ -1262,13 +671,7 @@ function calcEstPE(price, q1, q2) {
 
 
 
-
-
-
   else if (q1 != null) estEps = q1 * 4;
-
-
-
 
 
 
@@ -1276,76 +679,13 @@ function calcEstPE(price, q1, q2) {
 
 
 
-
-
-
   return +(price / estEps).toFixed(2);
 
 
 
-
-
-
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ─── Toast Notice Helper ────────────────────────────────────────── */
-
-
-function showToast(message) {
-
-
-  let toast = document.getElementById('toastNotice');
-
-
-  if (!toast) {
-
-
-    toast = document.createElement('div');
-
-
-    toast.id = 'toastNotice';
-
-
-    toast.className = 'toast-notice';
-
-
-    document.body.appendChild(toast);
-
-
-  }
-
-
-  toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
-
-
-  toast.classList.add('show');
-
-
-  setTimeout(() => {
-
-
-    toast.classList.remove('show');
-
-
-  }, 2500);
-
-
-}
 
 
 
@@ -1355,13 +695,7 @@ function showToast(message) {
 
 
 
-
-
-
 function fmtNum(v, decimals = 2) {
-
-
-
 
 
 
@@ -1369,23 +703,11 @@ function fmtNum(v, decimals = 2) {
 
 
 
-
-
-
   return Number(v).toFixed(decimals);
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1397,13 +719,7 @@ function epsHtml(v) {
 
 
 
-
-
-
   if (v == null || v === '') return '<span style="color:var(--text-dim)">—</span>';
-
-
-
 
 
 
@@ -1411,13 +727,7 @@ function epsHtml(v) {
 
 
 
-
-
-
   if (isNaN(n)) return '<span style="color:var(--text-dim)">—</span>';
-
-
-
 
 
 
@@ -1425,23 +735,11 @@ function epsHtml(v) {
 
 
 
-
-
-
   return `<span class="val-num${cls}">${n.toFixed(2)}</span>`;
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1453,13 +751,7 @@ function pePeHtml(pe, variant = '') {
 
 
 
-
-
-
   if (pe == null) return '<span class="pe-tag na">NA</span>';
-
-
-
 
 
 
@@ -1467,13 +759,7 @@ function pePeHtml(pe, variant = '') {
 
 
 
-
-
-
   if (pe < 15) cls = 'low';
-
-
-
 
 
 
@@ -1481,13 +767,7 @@ function pePeHtml(pe, variant = '') {
 
 
 
-
-
-
   if (variant) cls = variant;
-
-
-
 
 
 
@@ -1495,16 +775,7 @@ function pePeHtml(pe, variant = '') {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1516,13 +787,7 @@ function pePeHtml(pe, variant = '') {
 
 
 
-
-
-
 function renderTabs() {
-
-
-
 
 
 
@@ -1530,13 +795,7 @@ function renderTabs() {
 
 
 
-
-
-
   const container = document.getElementById('industryTabs');
-
-
-
 
 
 
@@ -1548,16 +807,7 @@ function renderTabs() {
 
 
 
-
-
-
-
-
-
   container.innerHTML = cats.map(cat => {
-
-
-
 
 
 
@@ -1565,13 +815,7 @@ function renderTabs() {
 
 
 
-
-
-
     const active = activeCategory === val ? 'active' : '';
-
-
-
 
 
 
@@ -1579,16 +823,7 @@ function renderTabs() {
 
 
 
-
-
-
   }).join('');
-
-
-
-
-
-
 
 
 
@@ -1600,13 +835,7 @@ function renderTabs() {
 
 
 
-
-
-
     b.addEventListener('click', () => {
-
-
-
 
 
 
@@ -1614,13 +843,7 @@ function renderTabs() {
 
 
 
-
-
-
       renderTabs();
-
-
-
 
 
 
@@ -1628,13 +851,7 @@ function renderTabs() {
 
 
 
-
-
-
     });
-
-
-
 
 
 
@@ -1642,16 +859,7 @@ function renderTabs() {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1663,13 +871,7 @@ function renderTabs() {
 
 
 
-
-
-
 function getFiltered() {
-
-
-
 
 
 
@@ -1677,20 +879,11 @@ function getFiltered() {
 
 
 
-
-
-
   const q = qInput ? qInput.value.trim().toLowerCase() : '';
 
 
 
-
-
-
   const sortSelect = document.getElementById('sortBySelect');
-
-
-
 
 
 
@@ -1702,16 +895,7 @@ function getFiltered() {
 
 
 
-
-
-
-
-
-
   let list = stockList.filter(s => {
-
-
-
 
 
 
@@ -1719,13 +903,7 @@ function getFiltered() {
 
 
 
-
-
-
     const qOk = !q || s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
-
-
-
 
 
 
@@ -1733,16 +911,7 @@ function getFiltered() {
 
 
 
-
-
-
   });
-
-
-
-
-
-
 
 
 
@@ -1754,13 +923,7 @@ function getFiltered() {
 
 
 
-
-
-
     const estA = calcEstPE(a.price, a.eps2026q1, a.eps2026q2);
-
-
-
 
 
 
@@ -1768,13 +931,7 @@ function getFiltered() {
 
 
 
-
-
-
     const knA  = calcKnownPE(a.price, a.eps2025);
-
-
-
 
 
 
@@ -1782,20 +939,11 @@ function getFiltered() {
 
 
 
-
-
-
     const cmA  = calcCurrentMultiple(a.price, a.epsTTM);
 
 
 
-
-
-
     const cmB  = calcCurrentMultiple(b.price, b.epsTTM);
-
-
-
 
 
 
@@ -1807,16 +955,7 @@ function getFiltered() {
 
 
 
-
-
-
-
-
-
     switch (sort) {
-
-
-
 
 
 
@@ -1824,13 +963,7 @@ function getFiltered() {
 
 
 
-
-
-
       case 'estPeDesc':         return nn(estB) - nn(estA);
-
-
-
 
 
 
@@ -1838,13 +971,7 @@ function getFiltered() {
 
 
 
-
-
-
       case 'knownPeAsc':        return nn(knA)  - nn(knB);
-
-
-
 
 
 
@@ -1852,13 +979,7 @@ function getFiltered() {
 
 
 
-
-
-
       case 'codeAsc':           return a.code.localeCompare(b.code);
-
-
-
 
 
 
@@ -1866,13 +987,7 @@ function getFiltered() {
 
 
 
-
-
-
     }
-
-
-
 
 
 
@@ -1884,26 +999,11 @@ function getFiltered() {
 
 
 
-
-
-
-
-
-
   return list;
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -1915,13 +1015,7 @@ function getFiltered() {
 
 
 
-
-
-
 function renderTable() {
-
-
-
 
 
 
@@ -1929,20 +1023,11 @@ function renderTable() {
 
 
 
-
-
-
   const tbody = document.getElementById('stockTableBody');
 
 
 
-
-
-
   const empty = document.getElementById('tableEmpty');
-
-
-
 
 
 
@@ -1954,16 +1039,7 @@ function renderTable() {
 
 
 
-
-
-
-
-
-
   if (list.length === 0) {
-
-
-
 
 
 
@@ -1971,13 +1047,7 @@ function renderTable() {
 
 
 
-
-
-
     empty.style.display = 'flex';
-
-
-
 
 
 
@@ -1985,13 +1055,7 @@ function renderTable() {
 
 
 
-
-
-
   }
-
-
-
 
 
 
@@ -2003,16 +1067,7 @@ function renderTable() {
 
 
 
-
-
-
-
-
-
   tbody.innerHTML = list.map((s, idx) => {
-
-
-
 
 
 
@@ -2020,13 +1075,7 @@ function renderTable() {
 
 
 
-
-
-
     const knownPE = calcKnownPE(s.price, s.eps2025);
-
-
-
 
 
 
@@ -2034,13 +1083,7 @@ function renderTable() {
 
 
 
-
-
-
     const estPE   = calcEstPE(s.price, s.eps2026q1, s.eps2026q2);
-
-
-
 
 
 
@@ -2052,16 +1095,7 @@ function renderTable() {
 
 
 
-
-
-
-
-
-
     return `
-
-
-
 
 
 
@@ -2069,13 +1103,7 @@ function renderTable() {
 
 
 
-
-
-
         <td class="sticky-col col-idx"><span class="row-num">${idx + 1}</span></td>
-
-
-
 
 
 
@@ -2083,13 +1111,7 @@ function renderTable() {
 
 
 
-
-
-
           <div class="stock-cell">
-
-
-
 
 
 
@@ -2097,13 +1119,7 @@ function renderTable() {
 
 
 
-
-
-
             <span class="stock-code">${s.code}</span>
-
-
-
 
 
 
@@ -2111,13 +1127,7 @@ function renderTable() {
 
 
 
-
-
-
         </td>
-
-
-
 
 
 
@@ -2125,13 +1135,7 @@ function renderTable() {
 
 
 
-
-
-
         <td>${epsHtml(s.eps2025)}</td>
-
-
-
 
 
 
@@ -2139,13 +1143,7 @@ function renderTable() {
 
 
 
-
-
-
         <td>${epsHtml(s.eps2026q2)}</td>
-
-
-
 
 
 
@@ -2153,13 +1151,7 @@ function renderTable() {
 
 
 
-
-
-
         <td><span class="val-num">${fmtNum(s.price)}</span></td>
-
-
-
 
 
 
@@ -2167,13 +1159,7 @@ function renderTable() {
 
 
 
-
-
-
         <td class="highlighted-td">${pePeHtml(curMult, 'cyan')}</td>
-
-
-
 
 
 
@@ -2181,13 +1167,7 @@ function renderTable() {
 
 
 
-
-
-
         <td>
-
-
-
 
 
 
@@ -2195,13 +1175,7 @@ function renderTable() {
 
 
 
-
-
-
             <button class="act-btn" onclick="editStock('${s.id}')" title="編輯"><i class="fa-solid fa-pen"></i></button>
-
-
-
 
 
 
@@ -2209,13 +1183,7 @@ function renderTable() {
 
 
 
-
-
-
           </div>
-
-
-
 
 
 
@@ -2223,13 +1191,7 @@ function renderTable() {
 
 
 
-
-
-
       </tr>`;
-
-
-
 
 
 
@@ -2241,26 +1203,11 @@ function renderTable() {
 
 
 
-
-
-
-
-
-
   updateKPIs(list);
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -2272,20 +1219,11 @@ function renderTable() {
 
 
 
-
-
-
 function updateKPIs(list) {
 
 
 
-
-
-
   const countEl = document.getElementById('statTotalCount');
-
-
-
 
 
 
@@ -2297,16 +1235,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
-
-
-
   const knPes = list.map(s => calcKnownPE(s.price, s.eps2025)).filter(v => v != null);
-
-
-
 
 
 
@@ -2318,16 +1247,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
-
-
-
   const avgKnEl = document.getElementById('statAvgKnownPe');
-
-
-
 
 
 
@@ -2335,23 +1255,11 @@ function updateKPIs(list) {
 
 
 
-
-
-
     avgKnEl.textContent = knPes.length ? (knPes.reduce((a,b)=>a+b,0)/knPes.length).toFixed(1)+'x' : '--';
 
 
 
-
-
-
   }
-
-
-
-
-
-
 
 
 
@@ -2363,16 +1271,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
   const lowestEl = document.getElementById('statLowestEstPe');
-
-
-
-
-
-
 
 
 
@@ -2384,13 +1283,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
     const avg = (estPes.reduce((a,b)=>a+b,0)/estPes.length).toFixed(1);
-
-
-
 
 
 
@@ -2402,16 +1295,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
-
-
-
     let minPe = Infinity, minStock = null;
-
-
-
 
 
 
@@ -2419,13 +1303,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
       const e = calcEstPE(s.price, s.eps2026q1, s.eps2026q2);
-
-
-
 
 
 
@@ -2433,13 +1311,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
     });
-
-
-
 
 
 
@@ -2447,13 +1319,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
       lowestEl.textContent = minStock ? `${minStock.name} ${minPe.toFixed(1)}x` : '--';
-
-
-
 
 
 
@@ -2461,13 +1327,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
   } else {
-
-
-
 
 
 
@@ -2475,20 +1335,11 @@ function updateKPIs(list) {
 
 
 
-
-
-
     if (lowestEl) lowestEl.textContent = '--';
 
 
 
-
-
-
   }
-
-
-
 
 
 
@@ -2500,16 +1351,7 @@ function updateKPIs(list) {
 
 
 
-
-
-
-
-
-
 /* ─── LocalStorage Cache helpers ─────────────────────────────────── */
-
-
-
 
 
 
@@ -2517,16 +1359,7 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 
 
-
-
-
 const CACHE_PREFIX = 'tw_pe_';
-
-
-
-
-
-
 
 
 
@@ -2542,16 +1375,7 @@ function cacheKey(dateStr) { return CACHE_PREFIX + dateStr; }
 
 
 
-
-
-
-
-
-
 function loadCache(dateStr) {
-
-
-
 
 
 
@@ -2559,13 +1383,7 @@ function loadCache(dateStr) {
 
 
 
-
-
-
     const raw = localStorage.getItem(cacheKey(dateStr));
-
-
-
 
 
 
@@ -2573,13 +1391,7 @@ function loadCache(dateStr) {
 
 
 
-
-
-
     const obj = JSON.parse(raw);
-
-
-
 
 
 
@@ -2587,13 +1399,7 @@ function loadCache(dateStr) {
 
 
 
-
-
-
       localStorage.removeItem(cacheKey(dateStr));
-
-
-
 
 
 
@@ -2601,13 +1407,7 @@ function loadCache(dateStr) {
 
 
 
-
-
-
     }
-
-
-
 
 
 
@@ -2615,23 +1415,11 @@ function loadCache(dateStr) {
 
 
 
-
-
-
   } catch { return null; }
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -2643,13 +1431,7 @@ function saveCache(dateStr, data) {
 
 
 
-
-
-
   try {
-
-
-
 
 
 
@@ -2657,13 +1439,7 @@ function saveCache(dateStr, data) {
 
 
 
-
-
-
     const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX));
-
-
-
 
 
 
@@ -2671,13 +1447,7 @@ function saveCache(dateStr, data) {
 
 
 
-
-
-
       keys.sort().slice(0, keys.length - 7).forEach(k => localStorage.removeItem(k));
-
-
-
 
 
 
@@ -2685,23 +1455,11 @@ function saveCache(dateStr, data) {
 
 
 
-
-
-
   } catch {}
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -2713,13 +1471,7 @@ function saveCache(dateStr, data) {
 
 
 
-
-
-
 function getLatestTradingDate() {
-
-
-
 
 
 
@@ -2727,13 +1479,7 @@ function getLatestTradingDate() {
 
 
 
-
-
-
   if (d.getHours() < 14) d.setDate(d.getDate() - 1);
-
-
-
 
 
 
@@ -2741,13 +1487,7 @@ function getLatestTradingDate() {
 
 
 
-
-
-
   const yyyy = d.getFullYear();
-
-
-
 
 
 
@@ -2755,13 +1495,7 @@ function getLatestTradingDate() {
 
 
 
-
-
-
   const dd   = String(d.getDate()).padStart(2, '0');
-
-
-
 
 
 
@@ -2769,9 +1503,6 @@ function getLatestTradingDate() {
 
 
 
-
-
-
 }
 
 
@@ -2781,132 +1512,259 @@ function getLatestTradingDate() {
 
 
 
+/* ─── Toast Notice & Global Update Handler ───────────────────────── */
+function showToast(message) {
+  let toast = document.getElementById('toastNotice');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toastNotice';
+    toast.className = 'toast-notice';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2500);
+}
 
-
-
-
+function forceUpdateAllStocks() {
+  console.log('🔥 [手動觸發] 點擊【更新全台股資料】按鈕！發起連線刷新...');
+  const datePicker = document.getElementById('datePicker');
+  const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+  fetchStockData(dateStr, true);
+}
+window.forceUpdateAllStocks = forceUpdateAllStocks;
 
 /* ─── Fetch data (with LocalStorage cache) ───────────────────────── */
 
 
 
-
-
-
 async function fetchStockData(dateStr, forceRefresh = false) {
-  console.log(`🚀 [台股更新流程 1/6] 開始執行股票更新 (日期: ${dateStr}, 強制連線刷新: ${forceRefresh})`);
+
+
+
   const btn = document.getElementById('btnLoadDateData');
+
+
+
   const datePicker = document.getElementById('datePicker');
+
+
+
   if (datePicker) datePicker.value = dateStr;
 
+
+
+
+
+
+
   if (!forceRefresh) {
+
+
+
     const cached = loadCache(dateStr);
+
+
+
     if (cached) {
-      console.log(`⚡ [台股更新流程] 從 LocalStorage 快取中瞬間載入 ${cached.length} 檔股票數據。`);
+
+
+
       stockList = mergeCustomStocks(cached);
+
+
+
       const d = dateStr.replace(/-/g, '/');
+
+
+
       const headEl = document.getElementById('priceHeaderDate');
+
+
+
       if (headEl) headEl.textContent = `${d} 收盤價`;
+
+
+
       const updateEl = document.getElementById('updateTime');
+
+
+
       if (updateEl) updateEl.textContent = `${d} ─ 快取資料`;
+
+
+
       const sideEl = document.getElementById('sidebarStatusText');
+
+
+
       if (sideEl) sideEl.textContent = `${d} (快取)`;
+
+
+
       renderTabs();
+
+
+
       renderTable();
+
+
+
       return;
+
+
+
     }
+
+
+
   }
 
-  const updateBtns = [
-    document.getElementById('btnLoadDateData'),
-    document.getElementById('btnUpdateAllMain'),
-    document.getElementById('btnUpdateAllTop'),
-    document.getElementById('sidebarBtnUpdateAll')
-  ].filter(Boolean);
 
-  console.log(`⏳ [台股更新流程 2/6] 已將 ${updateBtns.length} 個按鈕切換圖示為「更新中…」轉圈效果並停用。`);
+
+
+
+
 
   if (btn) {
+
+
+
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+
+
     btn.disabled = true;
+
+
+
   }
 
-  if (forceRefresh) {
-    updateBtns.forEach(b => {
-      b.disabled = true;
-      if (b.id === 'sidebarBtnUpdateAll') {
-        b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>更新中…</span>';
-      } else {
-        b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>更新中…</span>';
-      }
-    });
-    showToast('🔄 正從證交所與櫃買中心即時更新 2000+ 檔台股…');
-  }
+
 
   const updateEl = document.getElementById('updateTime');
-  if (updateEl) updateEl.textContent = forceRefresh ? '🔄 即時更新 2000+ 檔台股中…' : '資料載入中…';
+
+
+
+  if (updateEl) updateEl.textContent = forceRefresh ? '🔄 正從證交所與櫃買中心即時更新 2000+ 檔台股…' : '資料載入中…';
+
+
+
   const sideEl = document.getElementById('sidebarStatusText');
+
+
+
   if (sideEl) sideEl.textContent = '載入中…';
 
-  const apiUrl = `/api/stocks?date=${dateStr}` + (forceRefresh ? '&force=true' : '');
-  console.log(`🌐 [台股更新流程 3/6] 向後端 API 發起 HTTP GET 請求: ${apiUrl}`);
+
+
+
+
+
 
   try {
-    const startTime = Date.now();
-    const res = await fetch(apiUrl);
-    if (!res.ok) throw new Error(`HTTP 錯誤! 狀態碼: ${res.status}`);
+
+
+
+    const res = await fetch(`/api/stocks?date=${dateStr}` + (forceRefresh ? '&force=true' : ''));
+
+
+
+    if (!res.ok) throw new Error('API error');
+
+
+
     const data = await res.json();
-    const fetchDuration = ((Date.now() - startTime) / 1000).toFixed(2);
-    
-    console.log(`✅ [台股更新流程 4/6] 收到 API 回應 (耗時 ${fetchDuration}秒)! 狀態: ${data.status}, 總筆數: ${data.total || data.stocks?.length}`);
+
+
 
     if (data.stocks) {
+
+
+
       stockList = mergeCustomStocks(data.stocks);
+
+
+
       saveCache(dateStr, data.stocks);
-      console.log(`💾 [台股更新流程 5/6] 成功將 ${data.stocks.length} 檔股票數據寫入 LocalStorage 快取。`);
+
+
 
       const d = dateStr.replace(/-/g, '/');
-      const headEl = document.getElementById('priceHeaderDate');
-      if (headEl) headEl.textContent = `${d} 收盤價`;
-      const totalCount = data.total || data.stocks.length;
-      if (updateEl) updateEl.textContent = `${d} ─ 已載入 ${totalCount} 檔全台股`;
-      if (sideEl) sideEl.textContent = `${d} (${totalCount}檔)`;
 
-      console.log(`🎨 [台股更新流程 6/6] 重新渲染產業 Tabs 與股票表格完畢！`);
+
+
+      const headEl = document.getElementById('priceHeaderDate');
+
+
+
+      if (headEl) headEl.textContent = `${d} 收盤價`;
+
+
+
+      if (updateEl) updateEl.textContent = `${d} 已更新`;
+
+
+
+      if (sideEl) sideEl.textContent = `${d} 已載入`;
+
+
+
       renderTabs();
+
+
+
       renderTable();
 
-      if (forceRefresh) {
-        showToast(`已連線更新 ${totalCount} 檔全台股最新收盤價！`);
-      }
-      console.log(`🎉 [台股更新流程] 成功完成全台股更新！`);
+
+
     }
+
+
+
   } catch (err) {
-    console.error(`❌ [台股更新流程錯誤] 請求失敗:`, err);
+
+
+
     if (updateEl) updateEl.textContent = '載入失敗，請重試';
+
+
+
     if (sideEl) sideEl.textContent = '載入失敗';
+
+
+
+    console.error(err);
+
+
+
   } finally {
+
+
+
     if (btn) {
+
+
+
       btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i><span>查詢</span>';
+
+
+
       btn.disabled = false;
+
+
+
     }
-    updateBtns.forEach(b => {
-      b.disabled = false;
-      if (b.id === 'sidebarBtnUpdateAll') {
-        b.innerHTML = '<i class="fa-solid fa-rotate"></i> 更新全台股資料';
-      } else {
-        b.innerHTML = '<i class="fa-solid fa-rotate"></i> <span>更新資料</span>';
-      }
-    });
-    console.log(`🏁 [台股更新流程] 按鈕狀態與介面復原完畢。`);
+
+
+
   }
+
+
+
 }
-
-
-
-
-
-
 
 
 
@@ -2918,13 +1776,7 @@ async function fetchStockData(dateStr, forceRefresh = false) {
 
 
 
-
-
-
 function setupModalStockAutocomplete() {
-
-
-
 
 
 
@@ -2932,20 +1784,11 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
   const box = document.getElementById('suggestionsBox');
 
 
 
-
-
-
   const list = document.getElementById('suggestionsList');
-
-
-
 
 
 
@@ -2957,16 +1800,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
-
-
-
   searchInput.addEventListener('input', () => {
-
-
-
 
 
 
@@ -2974,13 +1808,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
     if (!q) {
-
-
-
 
 
 
@@ -2988,23 +1816,11 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
       return;
 
 
 
-
-
-
     }
-
-
-
-
-
-
 
 
 
@@ -3016,13 +1832,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
       s.code.toLowerCase().includes(q) || 
-
-
-
 
 
 
@@ -3030,13 +1840,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
       s.category.toLowerCase().includes(q)
-
-
-
 
 
 
@@ -3048,16 +1852,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
-
-
-
     if (matches.length === 0) {
-
-
-
 
 
 
@@ -3065,13 +1860,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
       return;
-
-
-
 
 
 
@@ -3083,16 +1872,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
-
-
-
     list.innerHTML = matches.map(s => `
-
-
-
 
 
 
@@ -3100,13 +1880,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
         <div class="sug-stock">
-
-
-
 
 
 
@@ -3114,13 +1888,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
           <span class="sug-name">${s.name}</span>
-
-
-
 
 
 
@@ -3128,13 +1896,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
         <span class="sug-cat">${s.category}</span>
-
-
-
 
 
 
@@ -3142,16 +1904,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
     `).join('');
-
-
-
-
-
-
 
 
 
@@ -3167,16 +1920,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
-
-
-
     list.querySelectorAll('.suggestion-item').forEach(item => {
-
-
-
 
 
 
@@ -3184,13 +1928,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
         const code = item.getAttribute('data-code');
-
-
-
 
 
 
@@ -3198,13 +1936,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
         const category = item.getAttribute('data-cat');
-
-
-
 
 
 
@@ -3212,13 +1944,7 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
       });
-
-
-
 
 
 
@@ -3226,23 +1952,11 @@ function setupModalStockAutocomplete() {
 
 
 
-
-
-
   });
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -3254,13 +1968,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
   const codeEl = document.getElementById('inputCode');
-
-
-
 
 
 
@@ -3268,20 +1976,11 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
   const catEl = document.getElementById('inputCategory');
 
 
 
-
-
-
   const searchEl = document.getElementById('modalStockSearch');
-
-
-
 
 
 
@@ -3293,16 +1992,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
-
-
-
   if (codeEl) codeEl.value = code;
-
-
-
 
 
 
@@ -3310,20 +2000,11 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
   if (catEl) catEl.value = category;
 
 
 
-
-
-
   if (searchEl) searchEl.value = `${code} ${name}`;
-
-
-
 
 
 
@@ -3335,16 +2016,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
-
-
-
   const existing = stockList.find(s => s.code === code);
-
-
-
 
 
 
@@ -3352,13 +2024,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
     const eps25 = document.getElementById('inputEps2025');
-
-
-
 
 
 
@@ -3366,13 +2032,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
     const eps26q1 = document.getElementById('inputEps2026Q1');
-
-
-
 
 
 
@@ -3380,13 +2040,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
     const eps26q2 = document.getElementById('inputEps2026Q2');
-
-
-
 
 
 
@@ -3394,13 +2048,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
     const prEl = document.getElementById('inputPrice');
-
-
-
 
 
 
@@ -3408,13 +2056,7 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
   } else {
-
-
-
 
 
 
@@ -3422,23 +2064,11 @@ function selectStockSuggestion(code, name, category) {
 
 
 
-
-
-
   }
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -3450,13 +2080,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
   const spinner = document.getElementById('modalSearchSpinner');
-
-
-
 
 
 
@@ -3464,13 +2088,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
   try {
-
-
-
 
 
 
@@ -3478,13 +2096,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
     const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
-
-
-
 
 
 
@@ -3492,13 +2104,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
     if (res.ok) {
-
-
-
 
 
 
@@ -3506,13 +2112,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
       const match = data.stocks?.find(s => s.code === code);
-
-
-
 
 
 
@@ -3520,13 +2120,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
         const eps25 = document.getElementById('inputEps2025');
-
-
-
 
 
 
@@ -3534,13 +2128,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
         const eps26q1 = document.getElementById('inputEps2026Q1');
-
-
-
 
 
 
@@ -3548,13 +2136,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
         const eps26q2 = document.getElementById('inputEps2026Q2');
-
-
-
 
 
 
@@ -3562,13 +2144,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
         const prEl = document.getElementById('inputPrice');
-
-
-
 
 
 
@@ -3576,13 +2152,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
       }
-
-
-
 
 
 
@@ -3590,13 +2160,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
   } catch (err) {
-
-
-
 
 
 
@@ -3604,13 +2168,7 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
   } finally {
-
-
-
 
 
 
@@ -3618,23 +2176,11 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
   }
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -3646,20 +2192,11 @@ async function fetchStockPriceAndEps(code) {
 
 
 
-
-
-
 function openModal(stock = null) {
 
 
 
-
-
-
   const form = document.getElementById('stockForm');
-
-
-
 
 
 
@@ -3671,16 +2208,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
-
-
-
   const searchIn = document.getElementById('modalStockSearch');
-
-
-
 
 
 
@@ -3688,13 +2216,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
   const sugBox = document.getElementById('suggestionsBox');
-
-
-
 
 
 
@@ -3706,16 +2228,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
-
-
-
   const titleEl = document.getElementById('modalTitle');
-
-
-
 
 
 
@@ -3727,16 +2240,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
-
-
-
   if (stock) {
-
-
-
 
 
 
@@ -3744,13 +2248,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (editId) editId.value = stock.id;
-
-
-
 
 
 
@@ -3758,13 +2256,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (catEl) catEl.value = stock.category || '';
-
-
-
 
 
 
@@ -3772,13 +2264,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (codeEl) codeEl.value = stock.code || '';
-
-
-
 
 
 
@@ -3786,13 +2272,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (nameEl) nameEl.value = stock.name || '';
-
-
-
 
 
 
@@ -3800,13 +2280,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (eps25) eps25.value = stock.eps2025 ?? '';
-
-
-
 
 
 
@@ -3814,13 +2288,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (eps26q1) eps26q1.value = stock.eps2026q1 ?? '';
-
-
-
 
 
 
@@ -3828,13 +2296,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (eps26q2) eps26q2.value = stock.eps2026q2 ?? '';
-
-
-
 
 
 
@@ -3842,13 +2304,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (prEl) prEl.value = stock.price ?? '';
-
-
-
 
 
 
@@ -3856,13 +2312,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
     if (titleEl) titleEl.textContent = '搜尋並新增股票';
-
-
-
 
 
 
@@ -3870,13 +2320,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
   }
-
-
-
 
 
 
@@ -3884,16 +2328,7 @@ function openModal(stock = null) {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -3905,23 +2340,11 @@ function closeModal() {
 
 
 
-
-
-
   document.getElementById('stockModal')?.classList.remove('show');
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -3933,13 +2356,7 @@ window.editStock = (id) => { const s = stockList.find(x => x.id === id); if (s) 
 
 
 
-
-
-
 window.deleteStock = (id) => {
-
-
-
 
 
 
@@ -3947,13 +2364,7 @@ window.deleteStock = (id) => {
 
 
 
-
-
-
   if (s && confirm(`確定要刪除 ${s.code} ${s.name}？`)) {
-
-
-
 
 
 
@@ -3961,13 +2372,7 @@ window.deleteStock = (id) => {
 
 
 
-
-
-
     saveCustomStocks(stockList);
-
-
-
 
 
 
@@ -3975,20 +2380,11 @@ window.deleteStock = (id) => {
 
 
 
-
-
-
     renderTable();
 
 
 
-
-
-
   }
-
-
-
 
 
 
@@ -4000,16 +2396,7 @@ window.deleteStock = (id) => {
 
 
 
-
-
-
-
-
-
 /* ─── Export CSV ─────────────────────────────────────────────────── */
-
-
-
 
 
 
@@ -4017,13 +2404,7 @@ function exportCsv() {
 
 
 
-
-
-
   const datePicker = document.getElementById('datePicker');
-
-
-
 
 
 
@@ -4031,13 +2412,7 @@ function exportCsv() {
 
 
 
-
-
-
   let csv = '\uFEFF產業,代號,名稱,2025全年EPS,2026Q1,2026Q2累計,TTM EPS,收盤價,已知P/E,目前EPS倍數,預估P/E\n';
-
-
-
 
 
 
@@ -4045,13 +2420,7 @@ function exportCsv() {
 
 
 
-
-
-
     const kn = calcKnownPE(s.price, s.eps2025) ?? 'NA';
-
-
-
 
 
 
@@ -4059,13 +2428,7 @@ function exportCsv() {
 
 
 
-
-
-
     const es = calcEstPE(s.price, s.eps2026q1, s.eps2026q2) ?? 'NA';
-
-
-
 
 
 
@@ -4073,13 +2436,7 @@ function exportCsv() {
 
 
 
-
-
-
   });
-
-
-
 
 
 
@@ -4087,13 +2444,7 @@ function exportCsv() {
 
 
 
-
-
-
   const a = Object.assign(document.createElement('a'), {
-
-
-
 
 
 
@@ -4101,13 +2452,7 @@ function exportCsv() {
 
 
 
-
-
-
     download: `台股本益比_${dateStr}.csv`
-
-
-
 
 
 
@@ -4115,23 +2460,11 @@ function exportCsv() {
 
 
 
-
-
-
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -4143,13 +2476,7 @@ function exportCsv() {
 
 
 
-
-
-
 function setChip(activeId) {
-
-
-
 
 
 
@@ -4157,13 +2484,7 @@ function setChip(activeId) {
 
 
 
-
-
-
     document.getElementById(id)?.classList.toggle('active', id === activeId);
-
-
-
 
 
 
@@ -4171,16 +2492,7 @@ function setChip(activeId) {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -4192,13 +2504,7 @@ function setChip(activeId) {
 
 
 
-
-
-
 function openSidebar() {
-
-
-
 
 
 
@@ -4206,20 +2512,11 @@ function openSidebar() {
 
 
 
-
-
-
   document.getElementById('sidebarOverlay')?.classList.add('show');
 
 
 
-
-
-
 }
-
-
-
 
 
 
@@ -4227,13 +2524,7 @@ function closeSidebar() {
 
 
 
-
-
-
   document.getElementById('sidebar')?.classList.remove('open');
-
-
-
 
 
 
@@ -4241,16 +2532,7 @@ function closeSidebar() {
 
 
 
-
-
-
 }
-
-
-
-
-
-
 
 
 
@@ -4262,13 +2544,7 @@ function closeSidebar() {
 
 
 
-
-
-
 function initScrollShadow() {
-
-
-
 
 
 
@@ -4276,13 +2552,7 @@ function initScrollShadow() {
 
 
 
-
-
-
   if (!container) return;
-
-
-
 
 
 
@@ -4290,20 +2560,11 @@ function initScrollShadow() {
 
 
 
-
-
-
     container.classList.toggle('scrolled', container.scrollLeft > 4);
 
 
 
-
-
-
   }, { passive: true });
-
-
-
 
 
 
@@ -4315,23 +2576,11 @@ function initScrollShadow() {
 
 
 
-
-
-
-
-
-
 /* ─── DOMContentLoaded ─────────────────────────────────────────────── */
 
 
 
-
-
-
 document.addEventListener('DOMContentLoaded', () => {
-
-
-
 
 
 
@@ -4343,16 +2592,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
-
-
-
   const latestDate = getLatestTradingDate();
-
-
-
 
 
 
@@ -4360,20 +2600,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   fetchStockData(latestDate);
 
 
 
-
-
-
   initScrollShadow();
-
-
-
 
 
 
@@ -4385,16 +2616,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
-
-
-
   document.getElementById('btnLoadDateData')?.addEventListener('click', (e) => {
-
-
-
 
 
 
@@ -4402,23 +2624,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     fetchStockData(val, e.shiftKey);
 
 
 
-
-
-
   });
-
-
-
-
-
-
 
 
 
@@ -4430,13 +2640,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     const s = getLatestTradingDate();
-
-
-
 
 
 
@@ -4444,13 +2648,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     setChip('btnDateToday');
-
-
-
 
 
 
@@ -4458,16 +2656,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   });
-
-
-
-
-
-
 
 
 
@@ -4479,13 +2668,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     const d = new Date();
-
-
-
 
 
 
@@ -4493,13 +2676,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
-
-
-
 
 
 
@@ -4507,13 +2684,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     if (datePicker) datePicker.value = s;
-
-
-
 
 
 
@@ -4521,23 +2692,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     fetchStockData(s);
 
 
 
-
-
-
   });
-
-
-
-
-
-
 
 
 
@@ -4549,16 +2708,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   document.getElementById('sortBySelect')?.addEventListener('change', renderTable);
-
-
-
-
-
-
 
 
 
@@ -4570,13 +2720,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   document.getElementById('btnAddStockTop')?.addEventListener('click', openAdd);
-
-
-
 
 
 
@@ -4584,13 +2728,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   document.getElementById('sidebarBtnAdd')?.addEventListener('click', openAdd);
-
-
-
 
 
 
@@ -4602,23 +2740,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
-
-
-
   document.getElementById('btnCloseModal')?.addEventListener('click', closeModal);
 
 
 
-
-
-
   document.getElementById('btnCancelModal')?.addEventListener('click', closeModal);
-
-
-
 
 
 
@@ -4630,16 +2756,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
-
-
-
   document.getElementById('stockForm')?.addEventListener('submit', (e) => {
-
-
-
 
 
 
@@ -4647,13 +2764,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     const id = document.getElementById('editStockId')?.value;
-
-
-
 
 
 
@@ -4661,13 +2772,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     const codeEl = document.getElementById('inputCode');
-
-
-
 
 
 
@@ -4675,13 +2780,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     const eps25El = document.getElementById('inputEps2025');
-
-
-
 
 
 
@@ -4689,13 +2788,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     const eps26q2El = document.getElementById('inputEps2026Q2');
-
-
-
 
 
 
@@ -4707,16 +2800,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
-
-
-
     const parsed = {
-
-
-
 
 
 
@@ -4724,13 +2808,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       code:     codeEl ? codeEl.value.trim() : '',
-
-
-
 
 
 
@@ -4738,13 +2816,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       eps2025:  (eps25El && eps25El.value !== '') ? +eps25El.value : null,
-
-
-
 
 
 
@@ -4752,13 +2824,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       eps2026q2:(eps26q2El && eps26q2El.value !== '') ? +eps26q2El.value : null,
-
-
-
 
 
 
@@ -4766,13 +2832,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       isCustom: true
-
-
-
 
 
 
@@ -4784,16 +2844,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
-
-
-
     if (id) {
-
-
-
 
 
 
@@ -4801,13 +2852,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       if (s) Object.assign(s, parsed);
-
-
-
 
 
 
@@ -4815,23 +2860,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       stockList.push({ id: parsed.code || String(Date.now()), ...parsed });
 
 
 
-
-
-
     }
-
-
-
-
-
-
 
 
 
@@ -4843,13 +2876,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     closeModal();
-
-
-
 
 
 
@@ -4857,23 +2884,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     renderTable();
 
 
 
-
-
-
   });
-
-
-
-
-
-
 
 
 
@@ -4885,16 +2900,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
-
-
-
-
-
-
 
 
 
@@ -4906,20 +2912,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
 
 
-
-
-
   });
-
-
-
 
 
 
@@ -4927,13 +2924,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     if (datePicker) {
-
-
-
 
 
 
@@ -4941,13 +2932,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       datePicker.focus();
-
-
-
 
 
 
@@ -4955,13 +2940,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   });
-
-
-
 
 
 
@@ -4969,13 +2948,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   document.getElementById('navExportMobile')?.addEventListener('click', exportCsv);
-
-
-
 
 
 
@@ -4983,23 +2956,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     document.getElementById('formula')?.scrollIntoView({ behavior: 'smooth' });
 
 
 
-
-
-
   });
-
-
-
-
-
-
 
 
 
@@ -5011,13 +2972,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     if (deferredPwaPrompt) {
-
-
-
 
 
 
@@ -5025,13 +2980,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       await deferredPwaPrompt.userChoice;
-
-
-
 
 
 
@@ -5039,13 +2988,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
       document.getElementById('pwaInstallBanner')?.classList.remove('show');
-
-
-
 
 
 
@@ -5053,13 +2996,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
   });
-
-
-
 
 
 
@@ -5067,13 +3004,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
     document.getElementById('pwaInstallBanner')?.classList.remove('show');
-
-
-
 
 
 
@@ -5081,13 +3012,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
 });
-
-
-
 
 
 
