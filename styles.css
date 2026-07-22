@@ -329,6 +329,33 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   box-shadow: 0 0 12px rgba(16,185,129,0.5);
 }
 
+/* ─── Toast Notice ─────────────────────────────────────────────────── */
+.toast-notice {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #fff;
+  padding: 0.65rem 1.4rem;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.45);
+  z-index: 10000;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toast-notice.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .shortcut-chips {
   display: flex;
   gap: 0.4rem;
