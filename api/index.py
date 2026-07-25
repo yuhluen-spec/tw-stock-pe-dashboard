@@ -4,6 +4,7 @@ import urllib.parse
 import ssl
 import json
 import time
+import datetime
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -99,6 +100,59 @@ def derive_eps_from_finmind(stock_id, ctx):
             'eps2026q2': ref.get('eps2026q2'),
             'epsTTM': ref.get('epsTTM')
         }
+
+def fetch_ma_data(stock_id, target_date_str, ctx):
+    try:
+        t_date = datetime.datetime.strptime(target_date_str, '%Y-%m-%d')
+        start_date = (t_date - datetime.timedelta(days=150)).strftime('%Y-%m-%d')
+        url = f"https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id={stock_id}&start_date={start_date}&end_date={target_date_str}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, context=ctx, timeout=4) as res:
+            data = json.loads(res.read().decode('utf-8')).get('data', [])
+            if not data:
+                return stock_id, {}
+            data = [x for x in data if x.get('date', '') <= target_date_str]
+            prices = [float(x['close']) for x in data if x.get('close') is not None]
+
+            def calc_ma(period):
+                if len(prices) < period:
+                    return None, 'flat', 0
+                ma_list = []
+                for i in range(len(prices)):
+                    if i + 1 < period:
+                        ma_list.append(None)
+                    else:
+                        ma_list.append(sum(prices[i - period + 1 : i + 1]) / period)
+                
+                dirs = [None] * len(ma_list)
+                for i in range(1, len(ma_list)):
+                    if ma_list[i] is not None and ma_list[i-1] is not None:
+                        if ma_list[i] > ma_list[i-1]:
+                            dirs[i] = 'up'
+                        elif ma_list[i] < ma_list[i-1]:
+                            dirs[i] = 'down'
+                        else:
+                            dirs[i] = 'flat'
+                last = len(prices) - 1
+                curr_ma = ma_list[last]
+                curr_dir = dirs[last] or 'flat'
+                streak = 0
+                if curr_dir in ('up', 'down'):
+                    for i in range(last, 0, -1):
+                        if dirs[i] == curr_dir:
+                            streak += 1
+                        else:
+                            break
+                return round(curr_ma, 2) if curr_ma is not None else None, curr_dir, streak
+
+            ma20, dir20, streak20 = calc_ma(20)
+            ma60, dir60, streak60 = calc_ma(60)
+            return stock_id, {
+                'ma20': ma20, 'ma20Dir': dir20, 'ma20Streak': streak20,
+                'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': streak60
+            }
+    except Exception:
+        return stock_id, {}
 
 def fetch_twse_prices(date_yyyymmdd, ctx):
     prices = {}
@@ -209,13 +263,18 @@ def get_stocks():
         # DEFAULT: Return ONLY core default tracked stocks (~18 stocks)!
         target_codes = DEFAULT_CORE_CODES
 
-    # Parallel EPS derivation for target stocks
+    # Parallel EPS & MA derivation for target stocks
     eps_results = {}
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    ma_results = {}
+    with ThreadPoolExecutor(max_workers=15) as executor:
         eps_futures = [executor.submit(derive_eps_from_finmind, c, ctx) for c in target_codes]
+        ma_futures = [executor.submit(fetch_ma_data, c, date_param, ctx) for c in target_codes]
         for f in eps_futures:
             code, eps_dict = f.result()
             eps_results[code] = eps_dict
+        for f in ma_futures:
+            code, ma_dict = f.result()
+            ma_results[code] = ma_dict
 
     result_stocks = []
     for code in target_codes:
@@ -224,6 +283,7 @@ def get_stocks():
         price = raw_info.get('price', SNAPSHOT_PRICES.get(code, 100.0))
         category = STOCK_CATEGORY_MAP.get(code, '台股個股')
         eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
+        ma_info = ma_results.get(code, {})
 
         result_stocks.append({
             'id': code,
@@ -234,7 +294,13 @@ def get_stocks():
             'eps2026q1': eps_data.get('eps2026q1'),
             'eps2026q2': eps_data.get('eps2026q2'),
             'epsTTM': eps_data.get('epsTTM'),
-            'price': price
+            'price': price,
+            'ma20': ma_info.get('ma20'),
+            'ma20Dir': ma_info.get('ma20Dir'),
+            'ma20Streak': ma_info.get('ma20Streak', 0),
+            'ma60': ma_info.get('ma60'),
+            'ma60Dir': ma_info.get('ma60Dir'),
+            'ma60Streak': ma_info.get('ma60Streak', 0)
         })
 
     SERVER_CACHE[cache_key] = {

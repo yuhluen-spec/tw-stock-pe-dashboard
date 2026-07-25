@@ -180,6 +180,8 @@
                 <option value="currentMultipleAsc">EPS倍數 低→高</option>
                 <option value="knownPeAsc">已知P/E 低→高</option>
                 <option value="priceDesc">收盤價 高→低</option>
+                <option value="ma20StreakDesc">月線上彎天數 多→少</option>
+                <option value="ma60StreakDesc">季線上彎天數 多→少</option>
                 <option value="codeAsc">股票代號 升序</option>
               </select>
             </div>
@@ -213,6 +215,8 @@
                   <th class="col-eps">2026 Q2累計</th>
                   <th class="col-eps highlight-head">近4季TTM EPS</th>
                   <th class="col-price" id="priceHeaderDate">收盤價</th>
+                  <th class="col-ma">月線 (20MA)</th>
+                  <th class="col-ma">季線 (60MA)</th>
                   <th class="col-pe">已知P/E</th>
                   <th class="col-pe highlight-head">目前EPS倍數</th>
                   <th class="col-pe">預估P/E</th>
@@ -254,6 +258,12 @@
                 <li>僅Q1公告：<code>Q1 × 4</code></li>
                 <li>已至Q2累計：<code>Q2累計 × 2</code></li>
               </ul>
+            </div>
+            <div class="formula-card">
+              <div class="formula-card-icon green"><i class="fa-solid fa-chart-line"></i></div>
+              <h3>月線 / 季線走勢狀況</h3>
+              <code>20MA ‧ 60MA 走勢與天數</code>
+              <p>比較所選日與前一交易日之均線數值。若 MA<sub>t</sub> > MA<sub>t-1</sub> 為 <strong>上彎</strong>，反之為 <strong>下彎</strong>，並顯示連續幾天維持該走勢。</p>
             </div>
           </div>
         </section>

@@ -199,6 +199,30 @@ function pePeHtml(pe, variant = '') {
   if (variant) cls = variant;
   return `<span class="pe-tag ${cls}">${pe.toFixed(1)}x</span>`;
 }
+function maStatusHtml(maVal, dir, streak) {
+  if (maVal == null || !dir) return '<span style="color:var(--text-dim)">—</span>';
+  let icon = '';
+  let badgeCls = '';
+  let text = '';
+  if (dir === 'up') {
+    icon = '<i class="fa-solid fa-arrow-trend-up"></i>';
+    badgeCls = 'ma-badge ma-up';
+    text = `上彎第 ${streak} 天`;
+  } else if (dir === 'down') {
+    icon = '<i class="fa-solid fa-arrow-trend-down"></i>';
+    badgeCls = 'ma-badge ma-down';
+    text = `下彎第 ${streak} 天`;
+  } else {
+    icon = '<i class="fa-solid fa-minus"></i>';
+    badgeCls = 'ma-badge ma-flat';
+    text = '持平';
+  }
+  return `
+    <div class="ma-cell">
+      <span class="val-num ma-val">${fmtNum(maVal)}</span>
+      <span class="${badgeCls}">${icon} ${text}</span>
+    </div>`;
+}
 /* ─── Render industry tabs ───────────────────────────────────────── */
 function renderTabs() {
   const cats = ['全部', ...new Set(stockList.map(s => s.category))];
@@ -242,6 +266,10 @@ function getFiltered() {
       case 'currentMultipleAsc':return nn(cmA)  - nn(cmB);
       case 'knownPeAsc':        return nn(knA)  - nn(knB);
       case 'priceDesc':         return b.price - a.price;
+      case 'ma20StreakDesc':
+        return ((b.ma20Dir === 'up' ? 1 : -1) * (b.ma20Streak || 0)) - ((a.ma20Dir === 'up' ? 1 : -1) * (a.ma20Streak || 0));
+      case 'ma60StreakDesc':
+        return ((b.ma60Dir === 'up' ? 1 : -1) * (b.ma60Streak || 0)) - ((a.ma60Dir === 'up' ? 1 : -1) * (a.ma60Streak || 0));
       case 'codeAsc':           return a.code.localeCompare(b.code);
       default:                  return 0;
     }
@@ -281,6 +309,8 @@ function renderTable() {
         <td>${epsHtml(s.eps2026q2)}</td>
         <td class="highlighted-td"><span class="val-num val-ttm">${fmtNum(s.epsTTM)}</span></td>
         <td><span class="val-num">${fmtNum(s.price)}</span></td>
+        <td>${maStatusHtml(s.ma20, s.ma20Dir, s.ma20Streak)}</td>
+        <td>${maStatusHtml(s.ma60, s.ma60Dir, s.ma60Streak)}</td>
         <td>${pePeHtml(knownPE)}</td>
         <td class="highlighted-td">${pePeHtml(curMult, 'cyan')}</td>
         <td>${pePeHtml(estPE)}</td>
@@ -628,12 +658,16 @@ window.deleteStock = (id) => {
 function exportCsv() {
   const datePicker = document.getElementById('datePicker');
   const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
-  let csv = '\uFEFF產業,代號,名稱,2025全年EPS,2026Q1,2026Q2累計,TTM EPS,收盤價,已知P/E,目前EPS倍數,預估P/E\n';
+  let csv = '\uFEFF產業,代號,名稱,2025全年EPS,2026Q1,2026Q2累計,TTM EPS,收盤價,月線(20MA),月線狀況,季線(60MA),季線狀況,已知P/E,目前EPS倍數,預估P/E\n';
   stockList.forEach(s => {
     const kn = calcKnownPE(s.price, s.eps2025) ?? 'NA';
     const cm = calcCurrentMultiple(s.price, s.epsTTM) ?? 'NA';
     const es = calcEstPE(s.price, s.eps2026q1, s.eps2026q2) ?? 'NA';
-    csv += `"${s.category}","${s.code}","${s.name}",${s.eps2025??''},${s.eps2026q1??''},${s.eps2026q2??''},${s.epsTTM??''},${s.price},${kn},${cm},${es}\n`;
+    const ma20Str = s.ma20 != null ? s.ma20 : 'NA';
+    const ma20Status = s.ma20Dir === 'up' ? `上彎第${s.ma20Streak}天` : (s.ma20Dir === 'down' ? `下彎第${s.ma20Streak}天` : (s.ma20Dir ? '持平' : 'NA'));
+    const ma60Str = s.ma60 != null ? s.ma60 : 'NA';
+    const ma60Status = s.ma60Dir === 'up' ? `上彎第${s.ma60Streak}天` : (s.ma60Dir === 'down' ? `下彎第${s.ma60Streak}天` : (s.ma60Dir ? '持平' : 'NA'));
+    csv += `"${s.category}","${s.code}","${s.name}",${s.eps2025??''},${s.eps2026q1??''},${s.eps2026q2??''},${s.epsTTM??''},${s.price},${ma20Str},"${ma20Status}",${ma60Str},"${ma60Status}",${kn},${cm},${es}\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const a = Object.assign(document.createElement('a'), {
