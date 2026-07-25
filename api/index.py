@@ -224,13 +224,16 @@ def serve_static(filename):
 def get_stocks():
     date_param = request.args.get('date', '2026-07-21')
     req_code = request.args.get('code')
+    req_custom = request.args.get('custom', '')
     req_all = request.args.get('all') == 'true'
     force_refresh = request.args.get('force') == 'true'
     date_yyyymmdd = date_param.replace('-', '')
     
+    custom_codes = [c.strip() for c in req_custom.split(',') if c.strip()]
+
     # Check Server-side Cache
     now = time.time()
-    cache_key = f"{date_param}_{req_code or ('all' if req_all else 'default')}"
+    cache_key = f"{date_param}_{req_code or ('all' if req_all else ('default_' + req_custom))}"
     if not force_refresh and cache_key in SERVER_CACHE:
         cached_entry = SERVER_CACHE[cache_key]
         if now - cached_entry['ts'] < CACHE_TTL:
@@ -260,8 +263,8 @@ def get_stocks():
     elif req_all:
         target_codes = list(all_raw_stocks.keys())
     else:
-        # DEFAULT: Return ONLY core default tracked stocks (~18 stocks)!
-        target_codes = DEFAULT_CORE_CODES
+        # DEFAULT: Return core default tracked stocks + any user custom stocks!
+        target_codes = list(dict.fromkeys(DEFAULT_CORE_CODES + custom_codes))
 
     # Parallel EPS & MA derivation for target stocks
     eps_results = {}

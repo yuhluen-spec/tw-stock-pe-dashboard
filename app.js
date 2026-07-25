@@ -130,6 +130,7 @@ const TW_STOCK_MASTER = [
 let stockList = [];
 let activeCategory = 'ALL';
 let deferredPwaPrompt = null;
+let currentModalFetchedStock = null;
 /* ─── Custom User Stocks Persistence ──────────────────────────────── */
 const CUSTOM_STOCKS_KEY = 'tw_pe_custom_user_stocks';
 function loadCustomStocks() {
@@ -148,7 +149,26 @@ function mergeCustomStocks(fetchedList) {
   if (!customStocks || customStocks.length === 0) return fetchedList;
   const resultMap = new Map(fetchedList.map(s => [s.id, s]));
   customStocks.forEach(custom => {
-    resultMap.set(custom.id, { ...resultMap.get(custom.id), ...custom });
+    const fetched = resultMap.get(custom.id) || resultMap.get(custom.code);
+    if (fetched) {
+      resultMap.set(custom.id, {
+        ...fetched,
+        ...custom,
+        price: custom.price || fetched.price,
+        eps2025: custom.eps2025 ?? fetched.eps2025,
+        eps2026q1: custom.eps2026q1 ?? fetched.eps2026q1,
+        eps2026q2: custom.eps2026q2 ?? fetched.eps2026q2,
+        epsTTM: custom.epsTTM ?? fetched.epsTTM,
+        ma20: fetched.ma20 ?? custom.ma20,
+        ma20Dir: fetched.ma20Dir ?? custom.ma20Dir,
+        ma20Streak: fetched.ma20Streak ?? custom.ma20Streak,
+        ma60: fetched.ma60 ?? custom.ma60,
+        ma60Dir: fetched.ma60Dir ?? custom.ma60Dir,
+        ma60Streak: fetched.ma60Streak ?? custom.ma60Streak
+      });
+    } else {
+      resultMap.set(custom.id, custom);
+    }
   });
   return Array.from(resultMap.values());
 }
@@ -199,7 +219,7 @@ function pePeHtml(pe, variant = '') {
   if (variant) cls = variant;
   return `<span class="pe-tag ${cls}">${pe.toFixed(1)}x</span>`;
 }
-function maStatusHtml(maVal, dir, streak) {
+function maStatusHtml(maVal, dir, streak, price = null, maLabel = '') {
   if (maVal == null || !dir) return '<span style="color:var(--text-dim)">—</span>';
   let icon = '';
   let badgeCls = '';
@@ -217,10 +237,22 @@ function maStatusHtml(maVal, dir, streak) {
     badgeCls = 'ma-badge ma-flat';
     text = '持平';
   }
+
+  let posHtml = '';
+  if (price != null && price > 0 && maVal > 0 && maLabel) {
+    const diffPct = ((price - maVal) / maVal) * 100;
+    if (price >= maVal) {
+      posHtml = `<span class="ma-pos pos-above" title="目前價格/點數 ${price} 高於${maLabel} ${maVal}"><i class="fa-solid fa-circle-chevron-up"></i> 在${maLabel}之上 (+${diffPct.toFixed(1)}%)</span>`;
+    } else {
+      posHtml = `<span class="ma-pos pos-below" title="目前價格/點數 ${price} 低於${maLabel} ${maVal}"><i class="fa-solid fa-circle-chevron-down"></i> 在${maLabel}之下 (${diffPct.toFixed(1)}%)</span>`;
+    }
+  }
+
   return `
     <div class="ma-cell">
       <span class="val-num ma-val">${fmtNum(maVal)}</span>
       <span class="${badgeCls}">${icon} ${text}</span>
+      ${posHtml}
     </div>`;
 }
 /* ─── Render industry tabs ───────────────────────────────────────── */
@@ -309,8 +341,8 @@ function renderTable() {
         <td>${epsHtml(s.eps2026q2)}</td>
         <td class="highlighted-td"><span class="val-num val-ttm">${fmtNum(s.epsTTM)}</span></td>
         <td><span class="val-num">${fmtNum(s.price)}</span></td>
-        <td>${maStatusHtml(s.ma20, s.ma20Dir, s.ma20Streak)}</td>
-        <td>${maStatusHtml(s.ma60, s.ma60Dir, s.ma60Streak)}</td>
+        <td>${maStatusHtml(s.ma20, s.ma20Dir, s.ma20Streak, s.price, '月線')}</td>
+        <td>${maStatusHtml(s.ma60, s.ma60Dir, s.ma60Streak, s.price, '季線')}</td>
         <td>${pePeHtml(knownPE)}</td>
         <td class="highlighted-td">${pePeHtml(curMult, 'cyan')}</td>
         <td>${pePeHtml(estPE)}</td>
@@ -467,7 +499,13 @@ async function fetchStockData(dateStr, forceRefresh = false) {
   const sideEl = document.getElementById('sidebarStatusText');
   if (sideEl) sideEl.textContent = '載入中…';
 
-  const apiUrl = `/api/stocks?date=${dateStr}` + (forceRefresh ? '&force=true' : '');
+  const customStocks = loadCustomStocks();
+  const customCodes = customStocks.map(s => s.code).filter(c => c && c.length === 4);
+  let apiUrl = `/api/stocks?date=${dateStr}`;
+  if (customCodes.length > 0) {
+    apiUrl += `&custom=${encodeURIComponent(customCodes.join(','))}`;
+  }
+  if (forceRefresh) apiUrl += '&force=true';
   console.log(`🌐 [台股更新 2/5] 發起 HTTP 請求: ${apiUrl}`);
 
   try {
@@ -569,6 +607,7 @@ function selectStockSuggestion(code, name, category) {
   if (box) box.style.display = 'none';
   const existing = stockList.find(s => s.code === code);
   if (existing) {
+    currentModalFetchedStock = existing;
     const eps25 = document.getElementById('inputEps2025');
     if (eps25) eps25.value = existing.eps2025 ?? '';
     const eps26q1 = document.getElementById('inputEps2026Q1');
@@ -592,6 +631,7 @@ async function fetchStockPriceAndEps(code) {
       const data = await res.json();
       const match = data.stocks?.find(s => s.code === code);
       if (match) {
+        currentModalFetchedStock = match;
         const eps25 = document.getElementById('inputEps2025');
         if (eps25) eps25.value = match.eps2025 ?? '';
         const eps26q1 = document.getElementById('inputEps2026Q1');
@@ -610,6 +650,7 @@ async function fetchStockPriceAndEps(code) {
 }
 /* ─── Modal ──────────────────────────────────────────────────────── */
 function openModal(stock = null) {
+  currentModalFetchedStock = stock || null;
   const form = document.getElementById('stockForm');
   if (form) form.reset();
   const searchIn = document.getElementById('modalStockSearch');
@@ -710,9 +751,9 @@ function renderIndicesTable() {
         <td><span class="val-num" style="font-weight:700;">` + priceFormatted + `</span></td>
         <td class="` + chgCls + `"><span class="val-num" style="font-weight:600;">` + changeText + `</span></td>
         <td>` + volumeStatusHtml(item.hasVolume, item.vma20, item.vma20Dir, item.vma20Streak) + `</td>
-        <td>` + maStatusHtml(item.ma20, item.ma20Dir, item.ma20Streak) + `</td>
-        <td>` + maStatusHtml(item.ma60, item.ma60Dir, item.ma60Streak) + `</td>
-        <td>` + maStatusHtml(item.ma240, item.ma240Dir, item.ma240Streak) + `</td>
+        <td>` + maStatusHtml(item.ma20, item.ma20Dir, item.ma20Streak, item.price, '月線') + `</td>
+        <td>` + maStatusHtml(item.ma60, item.ma60Dir, item.ma60Streak, item.price, '季線') + `</td>
+        <td>` + maStatusHtml(item.ma240, item.ma240Dir, item.ma240Streak, item.price, '年線') + `</td>
       </tr>`;
   }).join('');
 }
@@ -824,6 +865,13 @@ document.addEventListener('DOMContentLoaded', () => {
       eps2026q1:(eps26q1El && eps26q1El.value !== '') ? +eps26q1El.value : null,
       eps2026q2:(eps26q2El && eps26q2El.value !== '') ? +eps26q2El.value : null,
       price:    prEl ? +prEl.value : 0,
+      ma20:     currentModalFetchedStock?.ma20,
+      ma20Dir:  currentModalFetchedStock?.ma20Dir,
+      ma20Streak: currentModalFetchedStock?.ma20Streak,
+      ma60:     currentModalFetchedStock?.ma60,
+      ma60Dir:  currentModalFetchedStock?.ma60Dir,
+      ma60Streak: currentModalFetchedStock?.ma60Streak,
+      epsTTM:   currentModalFetchedStock?.epsTTM,
       isCustom: true
     };
     if (id) {
@@ -836,6 +884,9 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal();
     renderTabs();
     renderTable();
+    const datePicker = document.getElementById('datePicker');
+    const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+    fetchStockData(dateStr, false);
   });
   document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
   document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
@@ -900,6 +951,7 @@ async function fetchLiveStockInModal() {
       const match = data.stocks?.find(s => s.code === code) || data.stocks?.[0];
       
       if (match) {
+        currentModalFetchedStock = match;
         const codeEl = document.getElementById('inputCode');
         const nameEl = document.getElementById('inputName');
         const catEl = document.getElementById('inputCategory');
