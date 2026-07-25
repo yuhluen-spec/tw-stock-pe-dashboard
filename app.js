@@ -504,7 +504,7 @@ async function fetchStockData(dateStr, forceRefresh = false) {
   if (sideEl) sideEl.textContent = '載入中…';
 
   const customStocks = loadCustomStocks();
-  const customCodes = customStocks.map(s => s.code).filter(c => c && c.length === 4);
+  const customCodes = customStocks.map(s => s.code).filter(c => c && String(c).trim().length >= 3);
   let apiUrl = `/api/stocks?date=${dateStr}`;
   if (customCodes.length > 0) {
     apiUrl += `&custom=${encodeURIComponent(customCodes.join(','))}`;
@@ -524,8 +524,8 @@ async function fetchStockData(dateStr, forceRefresh = false) {
 
     if (data.stocks) {
       stockList = mergeCustomStocks(data.stocks);
-      saveCache(dateStr, data.stocks);
-      console.log(`💾 [台股更新 4/5] 已將 ${data.stocks.length} 檔股票存入 LocalStorage。`);
+      saveCache(dateStr, stockList);
+      console.log(`💾 [台股更新 4/5] 已將 ${stockList.length} 檔股票 (含自訂股) 存入 LocalStorage。`);
 
       const d = dateStr.replace(/-/g, '/');
       const headEl = document.getElementById('priceHeaderDate');
@@ -563,6 +563,14 @@ function setupModalStockAutocomplete() {
   const box = document.getElementById('suggestionsBox');
   const list = document.getElementById('suggestionsList');
   if (!searchInput || !box || !list) return;
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      fetchLiveStockInModal();
+    }
+  });
+
   searchInput.addEventListener('input', () => {
     const q = searchInput.value.trim().toLowerCase();
     if (!q) {
@@ -855,12 +863,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnCloseModal')?.addEventListener('click', closeModal);
   document.getElementById('btnCancelModal')?.addEventListener('click', closeModal);
   document.getElementById('stockModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
-  document.getElementById('stockForm')?.addEventListener('submit', (e) => {
+  document.getElementById('stockForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    let codeEl = document.getElementById('inputCode');
+    let nameEl = document.getElementById('inputName');
+    
+    // Auto fetch live stock data if code field is empty but search box has input
+    if (!codeEl?.value.trim()) {
+      const searchIn = document.getElementById('modalStockSearch');
+      if (searchIn?.value.trim()) {
+        await fetchLiveStockInModal();
+        codeEl = document.getElementById('inputCode');
+        nameEl = document.getElementById('inputName');
+      }
+    }
+
     const id = document.getElementById('editStockId')?.value;
     const catEl = document.getElementById('inputCategory');
-    const codeEl = document.getElementById('inputCode');
-    const nameEl = document.getElementById('inputName');
     const eps25El = document.getElementById('inputEps2025');
     const eps26q1El = document.getElementById('inputEps2026Q1');
     const eps26q2El = document.getElementById('inputEps2026Q2');
@@ -947,10 +966,10 @@ async function fetchLiveStockInModal() {
   const searchInput = document.getElementById('modalStockSearch');
   const codeInput = document.getElementById('inputCode');
   const queryRaw = (searchInput?.value || codeInput?.value || '').trim();
-  const codeMatch = queryRaw.match(/\d{4}/);
+  const codeMatch = queryRaw.match(/\d{4,5}/) || queryRaw.match(/[A-Za-z0-9]{3,6}/);
   
-  if (!codeMatch) {
-    showToast('請在搜尋框輸入 4 位數字股票代號（例如：2383、3665、6274、2317）');
+  if (!queryRaw || !codeMatch) {
+    showToast('請在搜尋框輸入股票代號（例如：2317、2383、00878、3665）');
     if (searchInput) searchInput.focus();
     return;
   }
