@@ -141,19 +141,23 @@ function loadCustomStocks() {
 }
 function saveCustomStocks(customList) {
   try {
-    localStorage.setItem(CUSTOM_STOCKS_KEY, JSON.stringify(customList));
+    const onlyCustom = customList.filter(s => s && s.isCustom);
+    localStorage.setItem(CUSTOM_STOCKS_KEY, JSON.stringify(onlyCustom));
   } catch {}
 }
 function mergeCustomStocks(fetchedList) {
   const customStocks = loadCustomStocks();
   if (!customStocks || customStocks.length === 0) return fetchedList;
-  const resultMap = new Map(fetchedList.map(s => [s.id, s]));
+  const resultMap = new Map(fetchedList.map(s => [s.code || s.id, s]));
   customStocks.forEach(custom => {
-    const fetched = resultMap.get(custom.id) || resultMap.get(custom.code);
+    const key = custom.code || custom.id;
+    const fetched = resultMap.get(key);
     if (fetched) {
-      resultMap.set(custom.id, {
+      resultMap.set(key, {
         ...fetched,
         ...custom,
+        category: custom.category || fetched.category,
+        name: custom.name || fetched.name,
         price: custom.price || fetched.price,
         eps2025: custom.eps2025 ?? fetched.eps2025,
         eps2026q1: custom.eps2026q1 ?? fetched.eps2026q1,
@@ -167,7 +171,7 @@ function mergeCustomStocks(fetchedList) {
         ma60Streak: fetched.ma60Streak ?? custom.ma60Streak
       });
     } else {
-      resultMap.set(custom.id, custom);
+      resultMap.set(key, custom);
     }
   });
   return Array.from(resultMap.values());
@@ -687,12 +691,16 @@ function closeModal() {
 }
 window.editStock = (id) => { const s = stockList.find(x => x.id === id); if (s) openModal(s); };
 window.deleteStock = (id) => {
-  const s = stockList.find(x => x.id === id);
+  const s = stockList.find(x => x.id === id || x.code === id);
   if (s && confirm(`確定要刪除 ${s.code} ${s.name}？`)) {
-    stockList = stockList.filter(x => x.id !== id);
+    stockList = stockList.filter(x => x.id !== id && x.code !== s.code);
     saveCustomStocks(stockList);
+    const datePicker = document.getElementById('datePicker');
+    const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+    localStorage.removeItem(cacheKey(dateStr));
     renderTabs();
     renderTable();
+    showToast(`已刪除股票 ${s.code} ${s.name}`);
   }
 };
 /* ─── Fetch and Render Market Indices ───────────────────────────── */
@@ -857,10 +865,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const eps26q1El = document.getElementById('inputEps2026Q1');
     const eps26q2El = document.getElementById('inputEps2026Q2');
     const prEl = document.getElementById('inputPrice');
+
+    const codeVal = codeEl ? codeEl.value.trim() : '';
+    const itemKey = codeVal || id || String(Date.now());
     const parsed = {
-      category: catEl ? catEl.value.trim() : '',
-      code:     codeEl ? codeEl.value.trim() : '',
-      name:     nameEl ? nameEl.value.trim() : '',
+      id:       itemKey,
+      category: catEl ? catEl.value.trim() : '台股個股',
+      code:     codeVal,
+      name:     nameEl ? nameEl.value.trim() : codeVal,
       eps2025:  (eps25El && eps25El.value !== '') ? +eps25El.value : null,
       eps2026q1:(eps26q1El && eps26q1El.value !== '') ? +eps26q1El.value : null,
       eps2026q2:(eps26q2El && eps26q2El.value !== '') ? +eps26q2El.value : null,
@@ -874,19 +886,31 @@ document.addEventListener('DOMContentLoaded', () => {
       epsTTM:   currentModalFetchedStock?.epsTTM,
       isCustom: true
     };
-    if (id) {
-      const s = stockList.find(x => x.id === id);
-      if (s) Object.assign(s, parsed);
+
+    const existingIdx = stockList.findIndex(x => x.id === itemKey || x.code === parsed.code);
+    if (existingIdx !== -1) {
+      stockList[existingIdx] = { ...stockList[existingIdx], ...parsed };
     } else {
-      stockList.push({ id: parsed.code || String(Date.now()), ...parsed });
+      stockList.push(parsed);
     }
+
     saveCustomStocks(stockList);
+
+    // Reset filters so newly added stock is guaranteed to be rendered on table
+    activeCategory = 'ALL';
+    const qInput = document.getElementById('searchInput');
+    if (qInput) qInput.value = '';
+
     closeModal();
     renderTabs();
     renderTable();
+
+    // Invalidate local cache and fetch fresh custom data from API
     const datePicker = document.getElementById('datePicker');
     const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+    localStorage.removeItem(cacheKey(dateStr));
     fetchStockData(dateStr, false);
+    showToast(`✅ 已新增個股 [${parsed.code} ${parsed.name}] 到列表！`);
   });
   document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
   document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
