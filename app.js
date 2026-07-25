@@ -654,6 +654,69 @@ window.deleteStock = (id) => {
     renderTable();
   }
 };
+/* ─── Fetch and Render Market Indices ───────────────────────────── */
+let indicesData = [];
+async function fetchIndicesData(forceRefresh = false) {
+  const tbody = document.getElementById('indicesTableBody');
+  if (tbody && indicesData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;"><i class="fa-solid fa-spinner fa-spin"></i> 大盤指數數據載入中…</td></tr>';
+  }
+  try {
+    const res = await fetch('/api/indices' + (forceRefresh ? '?force=true' : ''));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.indices) {
+      indicesData = data.indices;
+      renderIndicesTable();
+    }
+  } catch (err) {
+    console.error('Fetch indices failed:', err);
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#f87171;padding:2rem;">大盤數據載入失敗，請重試。</td></tr>';
+    }
+  }
+}
+
+function volumeStatusHtml(hasVolume, vmaVal, dir, streak) {
+  if (!hasVolume) return '<span style="color:var(--text-dim)">— 無成交量</span>';
+  return maStatusHtml(vmaVal, dir, streak);
+}
+
+function renderIndicesTable() {
+  const tbody = document.getElementById('indicesTableBody');
+  if (!tbody) return;
+  if (!indicesData || indicesData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;">無大盤資料</td></tr>';
+    return;
+  }
+  tbody.innerHTML = indicesData.map((item, idx) => {
+    const chgCls = item.change > 0 ? 'val-up' : (item.change < 0 ? 'val-down' : '');
+    const sign = item.change > 0 ? '+' : '';
+    const regColor = item.region === '台股' ? 'background:rgba(234,179,8,0.18);color:#eab308;' : 'background:rgba(56,189,248,0.18);color:#38bdf8;';
+    const regBadge = '<span class="cat-badge" style="' + regColor + '">' + item.region + '</span>';
+    const priceFormatted = Number(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const changeText = sign + item.change.toFixed(2) + ' (' + sign + item.changePct.toFixed(2) + '%)';
+    
+    return `
+      <tr>
+        <td class="col-idx"><span class="row-num">` + (idx + 1) + `</span></td>
+        <td class="col-stock">
+          <div class="stock-cell">
+            <span class="stock-name">` + item.name + `</span>
+            <span class="stock-code">` + item.code + `</span>
+          </div>
+        </td>
+        <td>` + regBadge + `</td>
+        <td><span class="val-num" style="font-weight:700;">` + priceFormatted + `</span></td>
+        <td class="` + chgCls + `"><span class="val-num" style="font-weight:600;">` + changeText + `</span></td>
+        <td>` + volumeStatusHtml(item.hasVolume, item.vma20, item.vma20Dir, item.vma20Streak) + `</td>
+        <td>` + maStatusHtml(item.ma20, item.ma20Dir, item.ma20Streak) + `</td>
+        <td>` + maStatusHtml(item.ma60, item.ma60Dir, item.ma60Streak) + `</td>
+        <td>` + maStatusHtml(item.ma240, item.ma240Dir, item.ma240Streak) + `</td>
+      </tr>`;
+  }).join('');
+}
+
 /* ─── Export CSV ─────────────────────────────────────────────────── */
 function exportCsv() {
   const datePicker = document.getElementById('datePicker');
@@ -705,6 +768,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const latestDate = getLatestTradingDate();
   if (datePicker) datePicker.value = latestDate;
   fetchStockData(latestDate);
+  fetchIndicesData();
+  document.getElementById("btnRefreshIndices")?.addEventListener("click", () => fetchIndicesData(true));
+  document.getElementById("navLinkIndices")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("indices")?.scrollIntoView({ behavior: "smooth" });
+    fetchIndicesData();
+  });
   initScrollShadow();
   setupModalStockAutocomplete();
   document.getElementById('btnLoadDateData')?.addEventListener('click', (e) => {

@@ -316,5 +316,137 @@ def get_stocks():
         'stocks': result_stocks
     })
 
+INDEX_CONFIG = [
+    {'code': '^TWII', 'name': '台灣加權指數', 'region': '台股'},
+    {'code': '^DJI',  'name': '道瓊工業指數', 'region': '美股'},
+    {'code': '^IXIC', 'name': '那斯達克指數', 'region': '美股'},
+    {'code': '^SOX',  'name': '費城半導體指數', 'region': '美股'},
+    {'code': '^GSPC', 'name': '標普500指數', 'region': '美股'}
+]
+
+def calc_series_ma_info(series, period):
+    if len(series) < period:
+        return None, 'flat', 0
+    ma_list = []
+    for i in range(len(series)):
+        if i + 1 < period:
+            ma_list.append(None)
+        else:
+            ma_list.append(sum(series[i - period + 1 : i + 1]) / period)
+    
+    dirs = [None] * len(ma_list)
+    for i in range(1, len(ma_list)):
+        if ma_list[i] is not None and ma_list[i-1] is not None:
+            if ma_list[i] > ma_list[i-1]:
+                dirs[i] = 'up'
+            elif ma_list[i] < ma_list[i-1]:
+                dirs[i] = 'down'
+            else:
+                dirs[i] = 'flat'
+    
+    last_idx = len(series) - 1
+    curr_ma = ma_list[last_idx]
+    curr_dir = dirs[last_idx] or 'flat'
+    streak = 0
+    if curr_dir in ('up', 'down'):
+        for i in range(last_idx, 0, -1):
+            if dirs[i] == curr_dir:
+                streak += 1
+            else:
+                break
+    return (round(curr_ma, 2) if curr_ma is not None else None), curr_dir, streak
+
+def fetch_single_index(item, ctx):
+    sym = item['code']
+    url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + urllib.parse.quote(sym) + '?range=1y&interval=1d'
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    try:
+        with urllib.request.urlopen(req, context=ctx, timeout=5) as res:
+            data = json.loads(res.read().decode('utf-8'))
+            result = data['chart']['result'][0]
+            timestamps = result.get('timestamp', [])
+            quote = result['indicators']['quote'][0]
+            raw_closes = quote.get('close', [])
+            raw_volumes = quote.get('volume', [])
+            
+            clean_pairs = []
+            for ts, c, v in zip(timestamps, raw_closes, raw_volumes if len(raw_volumes) == len(timestamps) else [None]*len(timestamps)):
+                if c is not None:
+                    clean_pairs.append((ts, float(c), float(v) if v is not None else 0.0))
+            
+            if not clean_pairs:
+                return item['code'], {}
+            
+            ts_list, prices, volumes = zip(*clean_pairs)
+            
+            ma20, dir20, streak20 = calc_series_ma_info(prices, 20)
+            ma60, dir60, streak60 = calc_series_ma_info(prices, 60)
+            ma240, dir240, streak240 = calc_series_ma_info(prices, 240)
+            
+            # Volume 20MA (VMA20)
+            valid_volumes = [v for v in volumes if v > 0]
+            has_volume = len(valid_volumes) >= 20
+            vma20, vdir20, vstreak20 = (None, 'flat', 0)
+            if has_volume:
+                vma20, vdir20, vstreak20 = calc_series_ma_info(volumes, 20)
+            
+            latest_price = round(prices[-1], 2)
+            prev_price = round(prices[-2], 2) if len(prices) >= 2 else latest_price
+            change = round(latest_price - prev_price, 2)
+            change_pct = round((change / prev_price) * 100, 2)
+            date_str = datetime.datetime.fromtimestamp(ts_list[-1]).strftime('%Y-%m-%d')
+            
+            return item['code'], {
+                'code': item['code'],
+                'name': item['name'],
+                'region': item['region'],
+                'price': latest_price,
+                'change': change,
+                'changePct': change_pct,
+                'date': date_str,
+                'ma20': ma20, 'ma20Dir': dir20, 'ma20Streak': streak20,
+                'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': streak60,
+                'ma240': ma240, 'ma240Dir': dir240, 'ma240Streak': streak240,
+                'hasVolume': has_volume,
+                'vma20': vma20, 'vma20Dir': vdir20, 'vma20Streak': vstreak20
+            }
+    except Exception:
+        return item['code'], {}
+
+@app.route('/api/indices', methods=['GET'])
+def get_indices():
+    now = time.time()
+    cache_key = 'indices_cache'
+    force_refresh = request.args.get('force') == 'true'
+    
+    if not force_refresh and cache_key in SERVER_CACHE:
+        cached_entry = SERVER_CACHE[cache_key]
+        if now - cached_entry['ts'] < CACHE_TTL:
+            return jsonify({
+                'status': 'ok',
+                'cached': True,
+                'indices': cached_entry['indices']
+            })
+
+    ctx = ssl._create_unverified_context()
+    indices_res = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(fetch_single_index, item, ctx) for item in INDEX_CONFIG]
+        for f in futures:
+            code, idx_dict = f.result()
+            if idx_dict:
+                indices_res.append(idx_dict)
+    
+    SERVER_CACHE[cache_key] = {
+        'ts': now,
+        'indices': indices_res
+    }
+    
+    return jsonify({
+        'status': 'ok',
+        'cached': False,
+        'indices': indices_res
+    })
+
 if __name__ == '__main__':
     app.run(port=8080)

@@ -58,6 +58,10 @@
           <i class="fa-solid fa-table-list"></i>
           <span>個股列表</span>
         </a>
+        <a class="nav-link" id="navLinkIndices" href="#indices">
+          <i class="fa-solid fa-chart-area"></i>
+          <span>大盤指數</span>
+        </a>
         <a class="nav-link" id="navLinkFormula" href="#formula">
           <i class="fa-solid fa-function"></i>
           <span>計算說明</span>
@@ -231,6 +235,39 @@
           <div class="table-empty" id="tableEmpty" style="display:none">
             <i class="fa-solid fa-inbox"></i>
             <span>無符合條件的股票資料</span>
+          </div>
+        </section>
+
+        <!-- ── Market Indices Section ───────────────────────────── -->
+        <section class="indices-section" id="indices">
+          <div class="section-header-wrap">
+            <h2 class="section-title"><i class="fa-solid fa-chart-area"></i> 主要大盤指數 ‧ 均線與均量走勢</h2>
+            <button class="query-btn refresh-btn" id="btnRefreshIndices">
+              <i class="fa-solid fa-rotate"></i>
+              <span>即時刷新大盤</span>
+            </button>
+          </div>
+          <div class="table-outer">
+            <div class="table-container">
+              <table class="stock-table indices-table">
+                <thead>
+                  <tr>
+                    <th class="col-idx">#</th>
+                    <th class="col-stock">大盤指數</th>
+                    <th class="col-cat">市場</th>
+                    <th class="col-price">最新點數</th>
+                    <th class="col-eps">日漲跌 (幅)</th>
+                    <th class="col-ma">成交量 20日均量</th>
+                    <th class="col-ma">月線 (20MA)</th>
+                    <th class="col-ma">季線 (60MA)</th>
+                    <th class="col-ma">年線 (240MA)</th>
+                  </tr>
+                </thead>
+                <tbody id="indicesTableBody">
+                  <tr><td colspan="9" style="text-align:center;padding:2rem;"><i class="fa-solid fa-spinner fa-spin"></i> 大盤指數數據載入中…</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
