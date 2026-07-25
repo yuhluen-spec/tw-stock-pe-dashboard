@@ -358,7 +358,7 @@ def calc_series_ma_info(series, period):
 
 def fetch_single_index(item, ctx):
     sym = item['code']
-    url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + urllib.parse.quote(sym) + '?range=1y&interval=1d'
+    url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + urllib.parse.quote(sym) + '?range=5y&interval=1d'
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     try:
         with urllib.request.urlopen(req, context=ctx, timeout=5) as res:
