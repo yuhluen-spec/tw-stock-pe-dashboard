@@ -485,13 +485,15 @@ async function fetchStockData(dateStr, forceRefresh = false) {
   }
 
   if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="display:inline-flex;align-items:center;justify-content:center;"></i>';
     btn.disabled = true;
   }
 
   if (sideUpdateBtn) {
     sideUpdateBtn.disabled = true;
-    sideUpdateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>更新中…</span>';
+    sideUpdateBtn.style.display = 'inline-flex';
+    sideUpdateBtn.style.alignItems = 'center';
+    sideUpdateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="flex-shrink:0;"></i> <span>更新中…</span>';
   }
 
   if (forceRefresh) {
@@ -915,6 +917,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     saveCustomStocks(stockList);
 
+    // Invalidate local date cache so next refresh fetches with the custom code
+    const datePicker = document.getElementById('datePicker');
+    const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+    localStorage.removeItem(cacheKey(dateStr));
+
     // Reset filters so newly added stock is guaranteed to be rendered on table
     activeCategory = 'ALL';
     const qInput = document.getElementById('searchInput');
@@ -924,12 +931,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTabs();
     renderTable();
 
-    // Invalidate local cache and fetch fresh custom data from API
-    const datePicker = document.getElementById('datePicker');
-    const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
-    localStorage.removeItem(cacheKey(dateStr));
-    fetchStockData(dateStr, false);
     showToast(`✅ 已新增個股 [${parsed.code} ${parsed.name}] 到列表！`);
+    // Note: Do NOT call fetchStockData here – it would overwrite stockList asynchronously
+    // and cause the newly added stock to disappear. The custom stock is saved in
+    // localStorage and will be fetched (via &custom=) on the next manual refresh.
   });
   document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
   document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);

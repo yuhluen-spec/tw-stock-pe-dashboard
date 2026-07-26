@@ -273,8 +273,9 @@ input[type="date"]#datePicker {
 input[type="date"]#datePicker:focus { border-color: var(--blue); }
 
 .query-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   padding: 0.42rem 0.9rem;
   background: var(--blue);
@@ -287,6 +288,7 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   font-family: inherit;
   transition: all 0.18s;
   white-space: nowrap;
+  min-width: 70px;
 }
 .query-btn:hover { filter: brightness(1.12); }
 
@@ -930,6 +932,10 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   top: 50%;
   transform: translateY(-50%);
   color: var(--blue);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .suggestions-box {
@@ -1052,6 +1058,11 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   box-shadow: 0 4px 16px rgba(37,99,235,0.5);
   font-size: 1.2rem !important;
   margin-top: -12px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  flex-direction: row !important;
 }
 
 /* ─── Sidebar Overlay ────────────────────────────────────────────── */
