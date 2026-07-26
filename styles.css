@@ -823,7 +823,53 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
 .ma-pos.pos-below {
   color: #4ade80;
   background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+/* KD Indicator */
+.kd-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.18rem;
+}
+.kd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  font-family: 'Outfit', monospace;
+  white-space: nowrap;
+}
+.kd-badge.kd-up {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+.kd-badge.kd-down {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
   border: 1px solid rgba(74, 222, 128, 0.3);
+}
+.kd-status {
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.05rem 0.35rem;
+  border-radius: 3px;
+  line-height: 1.1;
+}
+.kd-status.ob {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+.kd-status.os {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
 }
 
 .highlighted-td { background: rgba(14,165,233,0.05); }

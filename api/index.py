@@ -111,8 +111,11 @@ def fetch_ma_data(stock_id, target_date_str, ctx):
             data = json.loads(res.read().decode('utf-8')).get('data', [])
             if not data:
                 return stock_id, {}
-            data = [x for x in data if x.get('date', '') <= target_date_str]
-            prices = [float(x['close']) for x in data if x.get('close') is not None]
+            data = sorted([x for x in data if x.get('date', '') <= target_date_str and x.get('close') is not None], key=lambda x: x['date'])
+            prices = [float(x['close']) for x in data]
+            highs = [float(x.get('max', x['close'])) for x in data]
+            lows = [float(x.get('min', x['close'])) for x in data]
+            k_val, d_val = calc_kd_info(highs, lows, prices)
 
             def calc_ma(period):
                 if len(prices) < period:
@@ -149,7 +152,8 @@ def fetch_ma_data(stock_id, target_date_str, ctx):
             ma60, dir60, streak60 = calc_ma(60)
             return stock_id, {
                 'ma20': ma20, 'ma20Dir': dir20, 'ma20Streak': streak20,
-                'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': streak60
+                'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': streak60,
+                'kVal': k_val, 'dVal': d_val
             }
     except Exception:
         return stock_id, {}
@@ -303,7 +307,9 @@ def get_stocks():
             'ma20Streak': ma_info.get('ma20Streak', 0),
             'ma60': ma_info.get('ma60'),
             'ma60Dir': ma_info.get('ma60Dir'),
-            'ma60Streak': ma_info.get('ma60Streak', 0)
+            'ma60Streak': ma_info.get('ma60Streak', 0),
+            'kVal': ma_info.get('kVal'),
+            'dVal': ma_info.get('dVal')
         })
 
     SERVER_CACHE[cache_key] = {
@@ -326,6 +332,28 @@ INDEX_CONFIG = [
     {'code': '^SOX',  'name': '費城半導體指數', 'region': '美股'},
     {'code': '^GSPC', 'name': '標普500指數', 'region': '美股'}
 ]
+
+def calc_kd_info(highs, lows, closes, n=9, m1=3, m2=3):
+    """
+    Calculate Daily Stochastic Oscillator (9, 3, 3).
+    Returns (k, d) rounded to 1 decimal place.
+    """
+    if not closes or len(closes) < n or len(highs) < n or len(lows) < n:
+        return None, None
+    k = 50.0
+    d = 50.0
+    for i in range(len(closes)):
+        if i < n - 1:
+            continue
+        window_high = max(highs[i - n + 1 : i + 1])
+        window_low = min(lows[i - n + 1 : i + 1])
+        if window_high == window_low:
+            rsv = 50.0
+        else:
+            rsv = (closes[i] - window_low) / (window_high - window_low) * 100.0
+        k = k * (2.0 / m1) + rsv * (1.0 / m1)
+        d = d * (2.0 / m2) + k * (1.0 / m2)
+    return round(k, 1), round(d, 1)
 
 def calc_series_ma_info(series, period):
     if len(series) < period:
@@ -370,21 +398,31 @@ def fetch_single_index(item, ctx):
             timestamps = result.get('timestamp', [])
             quote = result['indicators']['quote'][0]
             raw_closes = quote.get('close', [])
+            raw_highs = quote.get('high', [])
+            raw_lows = quote.get('low', [])
             raw_volumes = quote.get('volume', [])
             
             clean_pairs = []
-            for ts, c, v in zip(timestamps, raw_closes, raw_volumes if len(raw_volumes) == len(timestamps) else [None]*len(timestamps)):
+            for ts, c, h, l, v in zip(timestamps, raw_closes,
+                                     raw_highs if len(raw_highs)==len(timestamps) else [None]*len(timestamps),
+                                     raw_lows if len(raw_lows)==len(timestamps) else [None]*len(timestamps),
+                                     raw_volumes if len(raw_volumes) == len(timestamps) else [None]*len(timestamps)):
                 if c is not None:
-                    clean_pairs.append((ts, float(c), float(v) if v is not None else 0.0))
+                    c_val = float(c)
+                    h_val = float(h) if h is not None else c_val
+                    l_val = float(l) if l is not None else c_val
+                    v_val = float(v) if v is not None else 0.0
+                    clean_pairs.append((ts, c_val, v_val, h_val, l_val))
             
             if not clean_pairs:
                 return item['code'], {}
             
-            ts_list, prices, volumes = zip(*clean_pairs)
+            ts_list, prices, volumes, highs, lows = zip(*clean_pairs)
             
             ma20, dir20, streak20 = calc_series_ma_info(prices, 20)
             ma60, dir60, streak60 = calc_series_ma_info(prices, 60)
             ma240, dir240, streak240 = calc_series_ma_info(prices, 240)
+            k_val, d_val = calc_kd_info(highs, lows, prices)
             
             # Volume 20MA (VMA20)
             valid_volumes = [v for v in volumes if v > 0]
@@ -410,6 +448,7 @@ def fetch_single_index(item, ctx):
                 'ma20': ma20, 'ma20Dir': dir20, 'ma20Streak': streak20,
                 'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': streak60,
                 'ma240': ma240, 'ma240Dir': dir240, 'ma240Streak': streak240,
+                'kVal': k_val, 'dVal': d_val,
                 'hasVolume': has_volume,
                 'vma20': vma20, 'vma20Dir': vdir20, 'vma20Streak': vstreak20
             }
@@ -475,14 +514,15 @@ def fetch_us_stock_data(stock_info, ctx):
     result = {
         'id': code, 'code': code,
         'name': stock_info.get('name', code),
-        'category': stock_info.get('sector', '\u7f8e\u80a1\u500b\u80a1'),
+        'category': stock_info.get('sector', '美股個股'),
         'price': 0,
         'ma20': None, 'ma20Dir': None, 'ma20Streak': 0,
         'ma60': None, 'ma60Dir': None, 'ma60Streak': 0,
         'epsTTM': None, 'epsFwd': None, 'peTTM': None, 'peFwd': None,
+        'kVal': None, 'dVal': None
     }
 
-    # 1) Price history \u2192 MA
+    # 1) Price history → MA & KD
     try:
         chart_url = (
             f'https://query1.finance.yahoo.com/v8/finance/chart/'
@@ -493,15 +533,31 @@ def fetch_us_stock_data(stock_info, ctx):
         )
         with urllib.request.urlopen(req, context=ctx, timeout=6) as res:
             d = json.loads(res.read().decode('utf-8'))
-            closes = d['chart']['result'][0]['indicators']['quote'][0].get('close', [])
-            prices = [float(c) for c in closes if c is not None]
-            if prices:
+            quote = d['chart']['result'][0]['indicators']['quote'][0]
+            closes = quote.get('close', [])
+            highs = quote.get('high', [])
+            lows = quote.get('low', [])
+
+            clean_triplets = []
+            for c, h, l in zip(closes,
+                               highs if len(highs)==len(closes) else [None]*len(closes),
+                               lows if len(lows)==len(closes) else [None]*len(closes)):
+                if c is not None:
+                    c_val = float(c)
+                    h_val = float(h) if h is not None else c_val
+                    l_val = float(l) if l is not None else c_val
+                    clean_triplets.append((c_val, h_val, l_val))
+
+            if clean_triplets:
+                prices, highs_list, lows_list = zip(*clean_triplets)
                 ma20, dir20, sk20 = calc_series_ma_info(prices, 20)
                 ma60, dir60, sk60 = calc_series_ma_info(prices, 60)
+                k_val, d_val = calc_kd_info(highs_list, lows_list, prices)
                 result.update({
                     'price': round(prices[-1], 2),
                     'ma20': ma20, 'ma20Dir': dir20, 'ma20Streak': sk20,
                     'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': sk60,
+                    'kVal': k_val, 'dVal': d_val,
                 })
     except Exception:
         pass

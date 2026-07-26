@@ -259,6 +259,32 @@ function maStatusHtml(maVal, dir, streak, price = null, maLabel = '') {
       ${posHtml}
     </div>`;
 }
+
+function kdHtml(kVal, dVal) {
+  if (kVal == null || dVal == null) return '<span style="color:var(--text-dim)">—</span>';
+  const k = typeof kVal === 'number' ? kVal : parseFloat(kVal);
+  const d = typeof dVal === 'number' ? dVal : parseFloat(dVal);
+  if (isNaN(k) || isNaN(d)) return '<span style="color:var(--text-dim)">—</span>';
+
+  const isUp = k >= d;
+  const badgeCls = isUp ? 'kd-badge kd-up' : 'kd-badge kd-down';
+  const icon = isUp ? '<i class="fa-solid fa-arrow-trend-up"></i>' : '<i class="fa-solid fa-arrow-trend-down"></i>';
+
+  let obOsTag = '';
+  if (k >= 80) {
+    obOsTag = '<span class="kd-status ob">超買 (K≥80)</span>';
+  } else if (k <= 20) {
+    obOsTag = '<span class="kd-status os">超賣 (K≤20)</span>';
+  }
+
+  return `
+    <div class="kd-cell">
+      <div class="${badgeCls}">
+        ${icon} <span>K:${k.toFixed(1)} / D:${d.toFixed(1)}</span>
+      </div>
+      ${obOsTag}
+    </div>`;
+}
 /* ─── Render industry tabs ───────────────────────────────────────── */
 function renderTabs() {
   const cats = ['全部', ...new Set(stockList.map(s => s.category))];
@@ -374,6 +400,7 @@ function renderTable() {
         <td><span class="val-num">${fmtNum(s.price)}</span></td>
         <td>${maStatusHtml(s.ma20, s.ma20Dir, s.ma20Streak, s.price, '月線')}</td>
         <td>${maStatusHtml(s.ma60, s.ma60Dir, s.ma60Streak, s.price, '季線')}</td>
+        <td>${kdHtml(s.kVal, s.dVal)}</td>
         <td>${pePeHtml(knownPE)}</td>
         <td class="highlighted-td">${pePeHtml(curMult, 'cyan')}</td>
         <td>${pePeHtml(estPE)}</td>
@@ -799,6 +826,7 @@ function renderIndicesTable() {
         <td>` + maStatusHtml(item.ma20, item.ma20Dir, item.ma20Streak, item.price, '月線') + `</td>
         <td>` + maStatusHtml(item.ma60, item.ma60Dir, item.ma60Streak, item.price, '季線') + `</td>
         <td>` + maStatusHtml(item.ma240, item.ma240Dir, item.ma240Streak, item.price, '年線') + `</td>
+        <td>` + kdHtml(item.kVal, item.dVal) + `</td>
       </tr>`;
   }).join('');
 }
@@ -986,6 +1014,7 @@ function renderUsTable() {
         <td>${usPriceHtml(s.price)}</td>
         <td>${maStatusHtml(s.ma20, s.ma20Dir, s.ma20Streak, s.price, '月線')}</td>
         <td>${maStatusHtml(s.ma60, s.ma60Dir, s.ma60Streak, s.price, '季線')}</td>
+        <td>${kdHtml(s.kVal, s.dVal)}</td>
         <td>${usPeHtml(s.peTTM)}</td>
         <td class="highlighted-td">${usPeHtml(s.peFwd, 'cyan')}</td>
         <td><div class="act-wrap">${delBtn}</div></td>
