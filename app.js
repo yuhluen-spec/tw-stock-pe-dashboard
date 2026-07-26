@@ -828,6 +828,7 @@ function renderIndicesTable() {
         <td>` + maStatusHtml(item.ma240, item.ma240Dir, item.ma240Streak, item.price, '年線') + `</td>
         <td>` + kdHtml(item.kVal, item.dVal) + `</td>
       </tr>`;
+  }).join('');
 }
 
 /* ─── Fetch and Render Global Macro Assets & Freight ─────────────── */
