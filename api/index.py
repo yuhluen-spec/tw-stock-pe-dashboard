@@ -451,5 +451,129 @@ def get_indices():
         'indices': indices_res
     })
 
+
+# \u2500\u2500\u2500 US Stocks \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+US_DEFAULT_STOCKS = [
+    {'code': 'NVDA',  'name': 'NVIDIA',         'sector': 'AI\u6676\u7247'},
+    {'code': 'AAPL',  'name': 'Apple',          'sector': '\u79d1\u6280/\u6d88\u8cbb'},
+    {'code': 'GOOGL', 'name': 'Alphabet',       'sector': '\u5ee3\u544a/AI'},
+    {'code': 'AMZN',  'name': 'Amazon',         'sector': '\u96fb\u5546/\u96f2\u7aef'},
+    {'code': 'TSLA',  'name': 'Tesla',          'sector': '\u96fb\u52d5\u8eca/AI'},
+    {'code': 'MSFT',  'name': 'Microsoft',      'sector': '\u96f2\u7aef/AI'},
+    {'code': 'META',  'name': 'Meta Platforms', 'sector': '\u793e\u7fa4/AI'},
+    {'code': 'AVGO',  'name': 'Broadcom',       'sector': 'AI\u6676\u7247/\u7db2\u8def'},
+    {'code': 'AMD',   'name': 'AMD',            'sector': 'AI\u6676\u7247'},
+    {'code': 'ARM',   'name': 'ARM Holdings',   'sector': 'IC\u8a2d\u8a08IP'},
+    {'code': 'TSM',   'name': 'TSMC ADR',       'sector': '\u6676\u5713\u4ee3\u5de5'},
+    {'code': 'ASML',  'name': 'ASML',           'sector': '\u534a\u5c0e\u9ad4\u8a2d\u5099'},
+]
+
+def fetch_us_stock_data(stock_info, ctx):
+    """Fetch price, 20/60 MA, TTM/Fwd P-E, TTM/Fwd EPS for one US stock."""
+    code = stock_info['code']
+    result = {
+        'id': code, 'code': code,
+        'name': stock_info.get('name', code),
+        'category': stock_info.get('sector', '\u7f8e\u80a1\u500b\u80a1'),
+        'price': 0,
+        'ma20': None, 'ma20Dir': None, 'ma20Streak': 0,
+        'ma60': None, 'ma60Dir': None, 'ma60Streak': 0,
+        'epsTTM': None, 'epsFwd': None, 'peTTM': None, 'peFwd': None,
+    }
+
+    # 1) Price history \u2192 MA
+    try:
+        chart_url = (
+            f'https://query1.finance.yahoo.com/v8/finance/chart/'
+            f'{urllib.parse.quote(code)}?range=1y&interval=1d'
+        )
+        req = urllib.request.Request(
+            chart_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        )
+        with urllib.request.urlopen(req, context=ctx, timeout=6) as res:
+            d = json.loads(res.read().decode('utf-8'))
+            closes = d['chart']['result'][0]['indicators']['quote'][0].get('close', [])
+            prices = [float(c) for c in closes if c is not None]
+            if prices:
+                ma20, dir20, sk20 = calc_series_ma_info(prices, 20)
+                ma60, dir60, sk60 = calc_series_ma_info(prices, 60)
+                result.update({
+                    'price': round(prices[-1], 2),
+                    'ma20': ma20, 'ma20Dir': dir20, 'ma20Streak': sk20,
+                    'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': sk60,
+                })
+    except Exception:
+        pass
+
+    # 2) Fundamentals \u2192 PE + EPS
+    try:
+        qs_url = (
+            f'https://query1.finance.yahoo.com/v10/finance/quoteSummary/'
+            f'{urllib.parse.quote(code)}?modules=summaryDetail,defaultKeyStatistics'
+        )
+        req2 = urllib.request.Request(
+            qs_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        )
+        with urllib.request.urlopen(req2, context=ctx, timeout=6) as res2:
+            fd = json.loads(res2.read().decode('utf-8'))
+            qr = fd.get('quoteSummary', {}).get('result', [{}])[0]
+            sd = qr.get('summaryDetail', {})
+            ks = qr.get('defaultKeyStatistics', {})
+
+            def _r(d, k):
+                v = d.get(k)
+                return v.get('raw') if isinstance(v, dict) else v
+
+            pe_t = _r(sd, 'trailingPE');  pe_f  = _r(sd, 'forwardPE')
+            eps_t = _r(ks, 'trailingEps'); eps_f = _r(ks, 'forwardEps')
+            result.update({
+                'peTTM':  round(pe_t,  2) if pe_t  else None,
+                'peFwd':  round(pe_f,  2) if pe_f  else None,
+                'epsTTM': round(eps_t, 2) if eps_t else None,
+                'epsFwd': round(eps_f, 2) if eps_f else None,
+            })
+    except Exception:
+        pass
+
+    return code, result
+
+
+@app.route('/api/us_stocks', methods=['GET'])
+def get_us_stocks():
+    force_refresh = request.args.get('force') == 'true'
+    req_custom    = request.args.get('custom', '')
+    req_code      = request.args.get('code', '').strip().upper()
+    now = time.time()
+
+    if req_code:
+        target    = [{'code': req_code, 'name': req_code, 'sector': '\u7f8e\u80a1\u500b\u80a1'}]
+        cache_key = f'us_single_{req_code}'
+    else:
+        custom_codes = [c.strip().upper() for c in req_custom.split(',') if c.strip()]
+        existing     = {s['code'] for s in US_DEFAULT_STOCKS}
+        extras       = [{'code': c, 'name': c, 'sector': '\u7f8e\u80a1\u500b\u80a1'}
+                        for c in custom_codes if c not in existing]
+        target    = list(US_DEFAULT_STOCKS) + extras
+        cache_key = f'us_stocks_{req_custom}'
+
+    if not force_refresh and cache_key in SERVER_CACHE:
+        cached = SERVER_CACHE[cache_key]
+        if now - cached['ts'] < CACHE_TTL:
+            return jsonify({'status': 'ok', 'cached': True, 'stocks': cached['stocks']})
+
+    ctx = ssl._create_unverified_context()
+    stock_map = {}
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(fetch_us_stock_data, s, ctx) for s in target]
+        for f in futures:
+            code, data = f.result()
+            stock_map[code] = data
+
+    results = [stock_map[s['code']] for s in target if s['code'] in stock_map]
+    SERVER_CACHE[cache_key] = {'ts': now, 'stocks': results}
+    return jsonify({'status': 'ok', 'cached': False, 'stocks': results})
+
+
 if __name__ == '__main__':
     app.run(port=8080)

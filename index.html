@@ -66,6 +66,10 @@
           <i class="fa-solid fa-function"></i>
           <span>計算說明</span>
         </a>
+        <a class="nav-link" id="navLinkUsStocks" href="#us-stocks">
+          <i class="fa-solid fa-globe"></i>
+          <span>美股個股</span>
+        </a>
       </nav>
 
       <div class="sidebar-actions">
@@ -271,6 +275,78 @@
           </div>
         </section>
 
+        <!-- ── US Stocks Section ────────────────────────────────── -->
+        <section class="indices-section" id="us-stocks">
+          <div class="section-header-wrap">
+            <h2 class="section-title">
+              <i class="fa-solid fa-globe"></i> 美股個股追蹤
+              <span style="font-size:0.68rem;background:rgba(59,130,246,0.15);color:#60a5fa;padding:0.12rem 0.5rem;border-radius:4px;font-weight:700;letter-spacing:0.5px;vertical-align:middle;">USD</span>
+            </h2>
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+              <button class="query-btn" id="btnAddUsStock" style="background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 2px 8px rgba(168,85,247,0.35);">
+                <i class="fa-solid fa-plus"></i><span>新增美股</span>
+              </button>
+              <button class="query-btn refresh-btn" id="btnRefreshUsStocks" style="background:linear-gradient(135deg,#1e40af,#3b82f6);">
+                <i class="fa-solid fa-rotate"></i><span>即時刷新</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- US Filter Bar -->
+          <div class="filter-bar" style="margin-bottom:0.75rem;">
+            <div class="filter-left">
+              <div class="search-wrap">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="usSearchInput" placeholder="搜尋美股代號或名稱…" autocomplete="off">
+              </div>
+              <div class="sort-wrap">
+                <i class="fa-solid fa-arrow-down-wide-short sort-icon"></i>
+                <select id="usSortBySelect">
+                  <option value="default">預設排序</option>
+                  <option value="priceDesc">股價 高→低</option>
+                  <option value="peTtmAsc">P/E TTM 低→高</option>
+                  <option value="peFwdAsc">P/E Fwd 低→高</option>
+                  <option value="codeAsc">代號 升序</option>
+                </select>
+              </div>
+            </div>
+            <div class="industry-tabs" id="usSectorTabs"></div>
+          </div>
+
+          <!-- US Table -->
+          <div class="table-section">
+            <div class="scroll-hint"><i class="fa-solid fa-left-right"></i> 左右滑動查看更多數據</div>
+            <div class="table-outer">
+              <div class="table-container" id="usTableContainer">
+                <table class="stock-table">
+                  <thead>
+                    <tr>
+                      <th class="sticky-col col-idx">#</th>
+                      <th class="sticky-col col-stock"><div class="th-inner">美股</div></th>
+                      <th>板塊</th>
+                      <th>EPS TTM (USD)</th>
+                      <th>EPS Fwd (USD)</th>
+                      <th>股價 (USD)</th>
+                      <th>月線 (20MA)</th>
+                      <th>季線 (60MA)</th>
+                      <th>P/E TTM</th>
+                      <th class="highlight-head">P/E Fwd</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="usStockTableBody">
+                    <tr><td colspan="11" style="text-align:center;padding:2rem;"><i class="fa-solid fa-spinner fa-spin"></i> 美股資料載入中…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="table-empty" id="usTableEmpty" style="display:none">
+              <i class="fa-solid fa-inbox"></i>
+              <span>無符合條件的美股資料</span>
+            </div>
+          </div>
+        </section>
+
         <!-- ── Formula Section ─────────────────────────────── -->
         <section class="formula-section" id="formula">
           <h2 class="section-title"><i class="fa-solid fa-circle-info"></i> 計算邏輯說明</h2>
@@ -407,6 +483,67 @@
           <button type="button" class="btn ghost" id="btnCancelModal">取消</button>
           <button type="submit" class="btn primary" id="btnSubmitStock">
             <i class="fa-solid fa-plus"></i> 一鍵新增個股
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add US Stock Modal -->
+  <div class="modal-backdrop" id="usStockModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon" style="background:rgba(168,85,247,0.15);color:#a855f7;">
+            <i class="fa-solid fa-globe"></i>
+          </div>
+          <h3 id="usModalTitle">新增美股</h3>
+        </div>
+        <button class="modal-close" id="btnCloseUsModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Autocomplete Search -->
+      <div class="modal-search-section">
+        <label for="usModalSearch" class="search-label" style="color:#c084fc;">
+          <i class="fa-solid fa-magnifying-glass"></i> 輸入美股代號（自動帶出前 7 筆）：
+        </label>
+        <div class="modal-search-wrap">
+          <input type="text" id="usModalSearch" placeholder="例：NVDA、AAPL、GOOGL、TSLA、MSFT…" autocomplete="off">
+          <i class="fa-solid fa-spinner fa-spin search-spinner" id="usModalSpinner" style="display:none"></i>
+        </div>
+        <button type="button" id="btnFetchUsStock"
+          class="query-btn"
+          onclick="fetchLiveUsStockInModal()"
+          style="margin-top:0.6rem;width:100%;justify-content:center;padding:0.5rem;font-size:0.82rem;background:linear-gradient(135deg,#7c3aed,#a855f7);">
+          <i class="fa-solid fa-bolt"></i> <span>即時抓取 Yahoo Finance 最新資料</span>
+        </button>
+        <div class="suggestions-box" id="usSuggestionsBox" style="display:none">
+          <div class="suggestions-header">匹配美股（點擊即可帶入）：</div>
+          <div class="suggestions-list" id="usSuggestionsList"></div>
+        </div>
+      </div>
+
+      <form id="usStockForm">
+        <input type="hidden" id="usEditStockId">
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="usInputCode">股票代號</label>
+            <input type="text" id="usInputCode" placeholder="自動帶入" required style="text-transform:uppercase;">
+          </div>
+          <div class="form-field">
+            <label for="usInputSector">板塊</label>
+            <input type="text" id="usInputSector" placeholder="自動帶入" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="usInputName">公司名稱</label>
+          <input type="text" id="usInputName" placeholder="自動帶入" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn ghost" id="btnCancelUsModal">取消</button>
+          <button type="submit" class="btn primary" id="btnSubmitUsStock"
+            style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+            <i class="fa-solid fa-plus"></i> 新增美股
           </button>
         </div>
       </form>

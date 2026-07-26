@@ -803,6 +803,329 @@ function renderIndicesTable() {
   }).join('');
 }
 
+
+/* ═════════════════════════════════════════════════════════════
+   US STOCKS MODULE
+   ═════════════════════════════════════════════════════════════ */
+
+/* ─── US Stock Master for Autocomplete ───────────────────────── */
+const US_STOCK_MASTER = [
+  { code:'NVDA',  name:'NVIDIA',              sector:'AI晶片' },
+  { code:'AAPL',  name:'Apple',              sector:'科技/消費' },
+  { code:'GOOGL', name:'Alphabet',           sector:'廣告/AI' },
+  { code:'AMZN',  name:'Amazon',             sector:'電商/雲端' },
+  { code:'TSLA',  name:'Tesla',              sector:'電動車/AI' },
+  { code:'MSFT',  name:'Microsoft',          sector:'雲端/AI' },
+  { code:'META',  name:'Meta Platforms',     sector:'社群/AI' },
+  { code:'AVGO',  name:'Broadcom',           sector:'AI晶片/網路' },
+  { code:'AMD',   name:'AMD',                sector:'AI晶片' },
+  { code:'ARM',   name:'ARM Holdings',       sector:'IC設計IP' },
+  { code:'TSM',   name:'TSMC ADR',           sector:'晶圓代工' },
+  { code:'ASML',  name:'ASML',               sector:'半導體設備' },
+  { code:'QCOM',  name:'Qualcomm',           sector:'行動晶片' },
+  { code:'INTC',  name:'Intel',              sector:'處理器' },
+  { code:'MRVL',  name:'Marvell Technology', sector:'AI晶片' },
+  { code:'AMAT',  name:'Applied Materials',  sector:'半導體設備' },
+  { code:'NFLX',  name:'Netflix',            sector:'串流媒體' },
+  { code:'JPM',   name:'JPMorgan Chase',     sector:'金融' },
+  { code:'GS',    name:'Goldman Sachs',      sector:'投資銀行' },
+  { code:'BRK-B', name:'Berkshire Hathaway', sector:'控股/保險' },
+  { code:'PLTR',  name:'Palantir',           sector:'AI/數據分析' },
+  { code:'NOW',   name:'ServiceNow',         sector:'企業AI' },
+  { code:'ORCL',  name:'Oracle',             sector:'企業雲端' },
+  { code:'CRM',   name:'Salesforce',         sector:'企業SaaS' },
+  { code:'ADBE',  name:'Adobe',              sector:'創意軟體' },
+  { code:'UBER',  name:'Uber',               sector:'共享出行' },
+  { code:'SNOW',  name:'Snowflake',          sector:'雲端數據' },
+  { code:'V',     name:'Visa',               sector:'支付' },
+  { code:'MA',    name:'Mastercard',         sector:'支付' },
+  { code:'UNH',   name:'UnitedHealth',       sector:'醫療保健' },
+];
+
+/* ─── US Sector → badge color ─────────────────────────────────── */
+const US_SECTOR_COLOR = {
+  'AI晶片':     {bg:'rgba(34,197,94,0.18)',   color:'#22c55e'},
+  'AI晶片/網路':{ bg:'rgba(34,197,94,0.18)',  color:'#22c55e'},
+  '科技/消費':  { bg:'rgba(59,130,246,0.18)', color:'#3b82f6'},
+  '廣告/AI':    { bg:'rgba(59,130,246,0.18)', color:'#3b82f6'},
+  '電商/雲端':  { bg:'rgba(59,130,246,0.18)', color:'#3b82f6'},
+  '雲端/AI':    { bg:'rgba(59,130,246,0.18)', color:'#3b82f6'},
+  '社群/AI':    { bg:'rgba(168,85,247,0.18)', color:'#a855f7'},
+  '電動車/AI':  { bg:'rgba(249,115,22,0.18)', color:'#f97316'},
+  '晶圓代工':   { bg:'rgba(234,179,8,0.18)',  color:'#eab308'},
+  '半導體設備': { bg:'rgba(234,179,8,0.18)',  color:'#eab308'},
+  'IC設計IP':   { bg:'rgba(34,197,94,0.18)',  color:'#22c55e'},
+  '行動晶片':   { bg:'rgba(34,197,94,0.18)',  color:'#22c55e'},
+  '處理器':     { bg:'rgba(100,116,139,0.18)',color:'#64748b'},
+  '金融':       { bg:'rgba(56,189,248,0.18)', color:'#38bdf8'},
+  '投資銀行':   { bg:'rgba(56,189,248,0.18)', color:'#38bdf8'},
+  '控股/保險':  { bg:'rgba(56,189,248,0.18)', color:'#38bdf8'},
+  '支付':       { bg:'rgba(56,189,248,0.18)', color:'#38bdf8'},
+  '串流媒體':   { bg:'rgba(244,63,94,0.18)',  color:'#f43f5e'},
+  'AI/數據分析':{ bg:'rgba(168,85,247,0.18)', color:'#a855f7'},
+  '企業AI':     { bg:'rgba(168,85,247,0.18)', color:'#a855f7'},
+  '企業SaaS':   { bg:'rgba(168,85,247,0.18)', color:'#a855f7'},
+  '企業雲端':   { bg:'rgba(168,85,247,0.18)', color:'#a855f7'},
+  '創意軟體':   { bg:'rgba(244,63,94,0.18)',  color:'#f43f5e'},
+  '共享出行':   { bg:'rgba(249,115,22,0.18)', color:'#f97316'},
+  '雲端數據':   { bg:'rgba(6,182,212,0.18)',  color:'#06b6d4'},
+  '醫療保健':   { bg:'rgba(16,185,129,0.18)', color:'#10b981'},
+  '美股個股':   { bg:'rgba(100,116,139,0.18)',color:'#64748b'},
+};
+function getUsSectorColor(sector) {
+  return US_SECTOR_COLOR[sector] || {bg:'rgba(100,116,139,0.18)',color:'#64748b'};
+}
+
+/* ─── US Custom Stock Persistence ────────────────────────────── */
+const US_CUSTOM_KEY = 'tw_pe_us_custom_stocks';
+function loadUsCustomStocks() {
+  try { return JSON.parse(localStorage.getItem(US_CUSTOM_KEY) || '[]'); } catch { return []; }
+}
+function saveUsCustomStocks(list) {
+  try { localStorage.setItem(US_CUSTOM_KEY, JSON.stringify(list.filter(s => s?.isCustom))); } catch {}
+}
+
+/* ─── US State ─────────────────────────────────────────────── */
+let usStockList = [];
+let usActiveCategory = 'ALL';
+let currentUsModalFetched = null;
+
+/* ─── US Helpers ───────────────────────────────────────────── */
+function usPeHtml(pe, variant = '') {
+  if (pe == null) return '<span class="pe-tag na">NA</span>';
+  let cls = 'mid';
+  if (pe < 20) cls = 'low'; else if (pe > 40) cls = 'high';
+  if (variant) cls = variant;
+  return `<span class="pe-tag ${cls}">${pe.toFixed(1)}x</span>`;
+}
+function usEpsHtml(v) {
+  if (v == null) return '<span style="color:var(--text-dim)">—</span>';
+  const n = +v; if (isNaN(n)) return '<span style="color:var(--text-dim)">—</span>';
+  const cls = n < 0 ? ' val-negative' : '';
+  return `<span class="val-num${cls}">$${n.toFixed(2)}</span>`;
+}
+function usPriceHtml(price) {
+  if (!price || price <= 0) return '<span style="color:var(--text-dim)">—</span>';
+  return `<span class="val-num" style="font-weight:700;">$${price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`;
+}
+
+/* ─── US getFiltered ────────────────────────────────────────── */
+function getUsFiltered() {
+  const q = (document.getElementById('usSearchInput')?.value || '').trim().toLowerCase();
+  const sort = document.getElementById('usSortBySelect')?.value || 'default';
+  let list = usStockList.filter(s => {
+    const catOk = usActiveCategory === 'ALL' || s.category === usActiveCategory;
+    const qOk = !q || s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
+    return catOk && qOk;
+  });
+  // Pin top-3 by price
+  const top3 = [...list].sort((a,b) => (b.price||0)-(a.price||0)).slice(0,3);
+  const top3Set = new Set(top3.map(s => s.code));
+  let rest = list.filter(s => !top3Set.has(s.code));
+  const nn = v => v == null ? Infinity : v;
+  rest.sort((a,b) => {
+    switch (sort) {
+      case 'priceDesc': return (b.price||0)-(a.price||0);
+      case 'peTtmAsc':  return nn(a.peTTM)-nn(b.peTTM);
+      case 'peFwdAsc':  return nn(a.peFwd)-nn(b.peFwd);
+      case 'codeAsc':   return a.code.localeCompare(b.code);
+      default:          return 0;
+    }
+  });
+  return [...top3, ...rest];
+}
+
+/* ─── US renderTabs ─────────────────────────────────────────── */
+function renderUsTabs() {
+  const cats = ['全部', ...new Set(usStockList.map(s => s.category))];
+  const c = document.getElementById('usSectorTabs');
+  if (!c) return;
+  c.innerHTML = cats.map(cat => {
+    const val = cat === '全部' ? 'ALL' : cat;
+    return `<button class="tab-pill ${usActiveCategory===val?'active':''}" data-uscat="${val}">${cat}</button>`;
+  }).join('');
+  c.querySelectorAll('.tab-pill').forEach(b => {
+    b.addEventListener('click', () => { usActiveCategory = b.dataset.uscat; renderUsTabs(); renderUsTable(); });
+  });
+}
+
+/* ─── US renderTable ────────────────────────────────────────── */
+function renderUsTable() {
+  const list = getUsFiltered();
+  const tbody = document.getElementById('usStockTableBody');
+  const empty = document.getElementById('usTableEmpty');
+  if (!tbody || !empty) return;
+  if (list.length === 0) { tbody.innerHTML = ''; empty.style.display = 'flex'; return; }
+  empty.style.display = 'none';
+  const MEDAL_META = [
+    {emoji:'🥇', rowCls:'price-gold',   badgeCls:'price-tag-gold',   label:'股價 #1'},
+    {emoji:'🥈', rowCls:'price-silver', badgeCls:'price-tag-silver', label:'股價 #2'},
+    {emoji:'🥉', rowCls:'price-bronze', badgeCls:'price-tag-bronze', label:'股價 #3'},
+  ];
+  tbody.innerHTML = list.map((s, idx) => {
+    const medal = idx < 3 ? MEDAL_META[idx] : null;
+    const trCls = [medal ? medal.rowCls : '', idx === 2 ? 'price-top3-last' : ''].filter(Boolean).join(' ');
+    const idxCell = medal ? `<span class="price-medal" title="${medal.label}">${medal.emoji}</span>` : `<span class="row-num">${idx+1}</span>`;
+    const leaderBadge = medal ? `<span class="price-leader-badge ${medal.badgeCls}">${medal.label}</span>` : '';
+    const sc = getUsSectorColor(s.category);
+    const catBadge = `<span class="cat-badge" style="background:${sc.bg};color:${sc.color}">${s.category}</span>`;
+    const delBtn = `<button class="act-btn del" onclick="deleteUsStock('${s.code}')" title="移除"><i class="fa-solid fa-trash"></i></button>`;
+    return `
+      <tr class="${trCls}">
+        <td class="sticky-col col-idx">${idxCell}</td>
+        <td class="sticky-col col-stock">
+          <div class="stock-cell">
+            <span class="stock-name">${s.name}</span>
+            <span class="stock-code">${s.code}</span>
+            ${leaderBadge}
+          </div>
+        </td>
+        <td>${catBadge}</td>
+        <td>${usEpsHtml(s.epsTTM)}</td>
+        <td>${usEpsHtml(s.epsFwd)}</td>
+        <td>${usPriceHtml(s.price)}</td>
+        <td>${maStatusHtml(s.ma20, s.ma20Dir, s.ma20Streak, s.price, '月線')}</td>
+        <td>${maStatusHtml(s.ma60, s.ma60Dir, s.ma60Streak, s.price, '季線')}</td>
+        <td>${usPeHtml(s.peTTM)}</td>
+        <td class="highlighted-td">${usPeHtml(s.peFwd, 'cyan')}</td>
+        <td><div class="act-wrap">${delBtn}</div></td>
+      </tr>`;
+  }).join('');
+}
+
+/* ─── Delete US Stock ────────────────────────────────────────── */
+window.deleteUsStock = (code) => {
+  const s = usStockList.find(x => x.code === code);
+  if (s && confirm(`確定要從列表移除 ${s.code} ${s.name}？`)) {
+    usStockList = usStockList.filter(x => x.code !== code);
+    const customs = loadUsCustomStocks().filter(x => x.code !== code);
+    localStorage.setItem(US_CUSTOM_KEY, JSON.stringify(customs));
+    renderUsTabs(); renderUsTable();
+    showToast(`已移除美股 ${code}`);
+  }
+};
+
+/* ─── US Modal ─────────────────────────────────────────────── */
+function openUsModal(stock = null) {
+  currentUsModalFetched = stock || null;
+  document.getElementById('usStockForm')?.reset();
+  const searchIn = document.getElementById('usModalSearch');
+  if (searchIn) searchIn.value = stock ? `${stock.code} ${stock.name}` : '';
+  document.getElementById('usSuggestionsBox').style.display = 'none';
+  document.getElementById('usModalTitle').textContent = stock ? '編輯美股' : '新增美股';
+  document.getElementById('usEditStockId').value = stock?.code || '';
+  if (stock) {
+    document.getElementById('usInputCode').value   = stock.code     || '';
+    document.getElementById('usInputName').value   = stock.name     || '';
+    document.getElementById('usInputSector').value = stock.category || '';
+  }
+  document.getElementById('usStockModal')?.classList.add('show');
+}
+function closeUsModal() { document.getElementById('usStockModal')?.classList.remove('show'); }
+
+/* ─── US Autocomplete ─────────────────────────────────────── */
+function setupUsModalAutocomplete() {
+  const searchIn = document.getElementById('usModalSearch');
+  const sugBox   = document.getElementById('usSuggestionsBox');
+  const sugList  = document.getElementById('usSuggestionsList');
+  if (!searchIn || !sugBox || !sugList) return;
+  searchIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); fetchLiveUsStockInModal(); } });
+  searchIn.addEventListener('input', () => {
+    const q = searchIn.value.trim().toLowerCase();
+    if (!q) { sugBox.style.display = 'none'; return; }
+    const matches = US_STOCK_MASTER.filter(s =>
+      s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.sector.toLowerCase().includes(q)
+    ).slice(0, 7);
+    if (!matches.length) { sugBox.style.display = 'none'; return; }
+    sugList.innerHTML = matches.map(s => `
+      <div class="suggestion-item" data-code="${s.code}" data-name="${s.name}" data-sector="${s.sector}">
+        <div class="sug-stock"><span class="sug-code">${s.code}</span><span class="sug-name">${s.name}</span></div>
+        <span class="sug-cat">${s.sector}</span>
+      </div>`).join('');
+    sugBox.style.display = 'block';
+    sugList.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const {code,name,sector} = item.dataset;
+        document.getElementById('usInputCode').value   = code;
+        document.getElementById('usInputName').value   = name;
+        document.getElementById('usInputSector').value = sector;
+        searchIn.value = `${code} ${name}`;
+        sugBox.style.display = 'none';
+        const existing = usStockList.find(s => s.code === code);
+        if (existing) currentUsModalFetched = existing;
+        else fetchLiveUsStockInModal(code);
+      });
+    });
+  });
+}
+
+/* ─── Fetch Live US Stock in Modal ────────────────────────────── */
+async function fetchLiveUsStockInModal(overrideCode) {
+  const searchIn = document.getElementById('usModalSearch');
+  const raw = (overrideCode || searchIn?.value || document.getElementById('usInputCode')?.value || '').trim().toUpperCase();
+  const code = raw.match(/[A-Z0-9\-]{1,10}/)?.[0];
+  if (!code) { showToast('請輸入美股代號（如 NVDA、AAPL）'); return; }
+  const spinner = document.getElementById('usModalSpinner');
+  const btn = document.getElementById('btnFetchUsStock');
+  if (spinner) spinner.style.display = 'inline-flex';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>查詢中…</span>'; }
+  try {
+    const res = await fetch(`/api/us_stocks?code=${encodeURIComponent(code)}`);
+    if (res.ok) {
+      const data = await res.json();
+      const match = data.stocks?.[0];
+      if (match) {
+        currentUsModalFetched = match;
+        document.getElementById('usInputCode').value   = match.code;
+        document.getElementById('usInputName').value   = match.name;
+        document.getElementById('usInputSector').value = match.category;
+        if (searchIn) searchIn.value = `${match.code} ${match.name}`;
+        showToast(`✅ 成功取得 ${match.code} ${match.name} 最新資料！`);
+      } else {
+        showToast(`⚠️ 查無代號 [${code}]，請確認是否正確。`);
+      }
+    }
+  } catch { showToast('連線 Yahoo Finance 失敗，請稍後重試'); }
+  finally {
+    if (spinner) spinner.style.display = 'none';
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> <span>即時抓取 Yahoo Finance 最新資料</span>'; }
+  }
+}
+window.fetchLiveUsStockInModal = fetchLiveUsStockInModal;
+
+/* ─── Fetch US Stock Data from API ────────────────────────────── */
+async function fetchUsStockData(forceRefresh = false) {
+  const tbody = document.getElementById('usStockTableBody');
+  if (tbody && usStockList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:2rem;"><i class="fa-solid fa-spinner fa-spin"></i> 美股資料載入中…</td></tr>';
+  }
+  const btn = document.getElementById('btnRefreshUsStocks');
+  if (btn) { btn.disabled = true; btn.style.display='inline-flex'; btn.style.alignItems='center'; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="flex-shrink:0;"></i> <span>更新中…</span>'; }
+  try {
+    const customs = loadUsCustomStocks();
+    const customCodes = customs.map(s => s.code).filter(Boolean);
+    const params = [];
+    if (forceRefresh) params.push('force=true');
+    if (customCodes.length) params.push(`custom=${encodeURIComponent(customCodes.join(','))}`);
+    const url = '/api/us_stocks' + (params.length ? '?' + params.join('&') : '');
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.stocks) {
+      const resultMap = new Map(data.stocks.map(s => [s.code, s]));
+      customs.forEach(c => { if (!resultMap.has(c.code)) resultMap.set(c.code, c); });
+      usStockList = Array.from(resultMap.values());
+      renderUsTabs(); renderUsTable();
+      if (forceRefresh) showToast(`已更新 ${usStockList.length} 支美股最新資料！`);
+    }
+  } catch (err) {
+    console.error('美股資料載入失敗:', err);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#f87171;padding:2rem;">美股資料載入失敗，請稍後重試。</td></tr>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> <span>即時刷新</span>'; }
+  }
+}
+
 /* ─── Export CSV ─────────────────────────────────────────────────── */
 function exportCsv() {
   const datePicker = document.getElementById('datePicker');
@@ -964,6 +1287,45 @@ document.addEventListener('DOMContentLoaded', () => {
     // localStorage and will be fetched (via &custom=) on the next manual refresh.
   });
   document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
+  // US Stocks
+  fetchUsStockData();
+  setupUsModalAutocomplete();
+  document.getElementById('btnRefreshUsStocks')?.addEventListener('click', () => fetchUsStockData(true));
+  document.getElementById('btnAddUsStock')?.addEventListener('click', () => openUsModal());
+  document.getElementById('navLinkUsStocks')?.addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('us-stocks')?.scrollIntoView({ behavior: 'smooth' });
+  });
+  document.getElementById('btnCloseUsModal')?.addEventListener('click', closeUsModal);
+  document.getElementById('btnCancelUsModal')?.addEventListener('click', closeUsModal);
+  document.getElementById('usStockModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeUsModal(); });
+  document.getElementById('usSearchInput')?.addEventListener('input', renderUsTable);
+  document.getElementById('usSortBySelect')?.addEventListener('change', renderUsTable);
+  document.getElementById('usStockForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const codeVal = (document.getElementById('usInputCode')?.value || '').trim().toUpperCase();
+    if (!codeVal) { showToast('請輸入美股代號'); return; }
+    const f = currentUsModalFetched;
+    const parsed = {
+      id: codeVal, code: codeVal,
+      name:     document.getElementById('usInputName')?.value.trim()   || codeVal,
+      category: document.getElementById('usInputSector')?.value.trim() || '美股個股',
+      price:    f?.price    || 0,
+      ma20:     f?.ma20,     ma20Dir: f?.ma20Dir, ma20Streak: f?.ma20Streak || 0,
+      ma60:     f?.ma60,     ma60Dir: f?.ma60Dir, ma60Streak: f?.ma60Streak || 0,
+      epsTTM:   f?.epsTTM,  epsFwd: f?.epsFwd,
+      peTTM:    f?.peTTM,   peFwd:  f?.peFwd,
+      isCustom: true,
+    };
+    const idx = usStockList.findIndex(x => x.code === codeVal);
+    if (idx !== -1) usStockList[idx] = { ...usStockList[idx], ...parsed };
+    else usStockList.push(parsed);
+    saveUsCustomStocks(usStockList);
+    usActiveCategory = 'ALL';
+    const qIn = document.getElementById('usSearchInput'); if (qIn) qIn.value = '';
+    closeUsModal(); renderUsTabs(); renderUsTable();
+    showToast(`✅ 已新增美股 [${codeVal} ${parsed.name}] 到列表！`);
+  });
   document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
   document.getElementById('navHome')?.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
