@@ -330,7 +330,10 @@ INDEX_CONFIG = [
     {'code': '^DJI',  'name': '道瓊工業指數', 'region': '美股'},
     {'code': '^IXIC', 'name': '那斯達克指數', 'region': '美股'},
     {'code': '^SOX',  'name': '費城半導體指數', 'region': '美股'},
-    {'code': '^GSPC', 'name': '標普500指數', 'region': '美股'}
+    {'code': '^GSPC', 'name': '標普500指數', 'region': '美股'},
+    {'code': '^N225', 'name': '日經225指數', 'region': '日股'},
+    {'code': '^KS11', 'name': '韓國綜合指數', 'region': '韓股'},
+    {'code': '000001.SS', 'name': '上證綜合指數', 'region': '陸股'}
 ]
 
 def calc_kd_info(highs, lows, closes, n=9, m1=3, m2=3):

@@ -805,7 +805,11 @@ function renderIndicesTable() {
   tbody.innerHTML = indicesData.map((item, idx) => {
     const chgCls = item.change > 0 ? 'val-up' : (item.change < 0 ? 'val-down' : '');
     const sign = item.change > 0 ? '+' : '';
-    const regColor = item.region === '台股' ? 'background:rgba(234,179,8,0.18);color:#eab308;' : 'background:rgba(56,189,248,0.18);color:#38bdf8;';
+    let regColor = 'background:rgba(56,189,248,0.18);color:#38bdf8;'; // 美股
+    if (item.region === '台股') regColor = 'background:rgba(234,179,8,0.18);color:#eab308;';
+    else if (item.region === '日股') regColor = 'background:rgba(236,72,153,0.18);color:#ec4899;';
+    else if (item.region === '韓股') regColor = 'background:rgba(168,85,247,0.18);color:#a855f7;';
+    else if (item.region === '陸股') regColor = 'background:rgba(239,68,68,0.18);color:#ef4444;';
     const regBadge = '<span class="cat-badge" style="' + regColor + '">' + item.region + '</span>';
     const priceFormatted = Number(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const changeText = sign + item.change.toFixed(2) + ' (' + sign + item.changePct.toFixed(2) + '%)';
