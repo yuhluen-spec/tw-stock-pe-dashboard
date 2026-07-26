@@ -288,7 +288,14 @@ function getFiltered() {
     const qOk = !q || s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
     return catOk && qOk;
   });
-  list.sort((a, b) => {
+
+  /* ── Pin top-3 highest-price stocks at the very front ── */
+  const top3 = [...list].sort((a, b) => (b.price || 0) - (a.price || 0)).slice(0, 3);
+  const top3Set = new Set(top3.map(s => s.code));
+  let rest = list.filter(s => !top3Set.has(s.code));
+
+  /* ── Sort the remaining stocks by user-selected sort ── */
+  const sortFn = (a, b) => {
     const estA = calcEstPE(a.price, a.eps2026q1, a.eps2026q2);
     const estB = calcEstPE(b.price, b.eps2026q1, b.eps2026q2);
     const knA  = calcKnownPE(a.price, a.eps2025);
@@ -309,8 +316,10 @@ function getFiltered() {
       case 'codeAsc':           return a.code.localeCompare(b.code);
       default:                  return 0;
     }
-  });
-  return list;
+  };
+  rest.sort(sortFn);
+
+  return [...top3, ...rest];
 }
 /* ─── Render table ───────────────────────────────────────────────── */
 function renderTable() {
@@ -324,19 +333,37 @@ function renderTable() {
     return;
   }
   empty.style.display = 'none';
+  /* Price-leader medal meta (top 3 by price) */
+  const MEDAL_META = [
+    { emoji: '🥇', rowCls: 'price-gold',   badgeCls: 'price-tag-gold',   label: '股價 #1' },
+    { emoji: '🥈', rowCls: 'price-silver', badgeCls: 'price-tag-silver', label: '股價 #2' },
+    { emoji: '🥉', rowCls: 'price-bronze', badgeCls: 'price-tag-bronze', label: '股價 #3' },
+  ];
+
   tbody.innerHTML = list.map((s, idx) => {
     const meta    = getCatMeta(s.category);
     const knownPE = calcKnownPE(s.price, s.eps2025);
     const curMult = calcCurrentMultiple(s.price, s.epsTTM);
     const estPE   = calcEstPE(s.price, s.eps2026q1, s.eps2026q2);
     const catBadge = `<span class="cat-badge" style="background:${meta.bg};color:${meta.color}">${meta.label}</span>`;
+
+    const medal = idx < 3 ? MEDAL_META[idx] : null;
+    const trCls  = [meta.cls, medal ? medal.rowCls : '', idx === 2 ? 'price-top3-last' : ''].filter(Boolean).join(' ');
+    const idxCell = medal
+      ? `<span class="price-medal" title="${medal.label}">${medal.emoji}</span>`
+      : `<span class="row-num">${idx + 1}</span>`;
+    const leaderBadge = medal
+      ? `<span class="price-leader-badge ${medal.badgeCls}">${medal.label}</span>`
+      : '';
+
     return `
-      <tr class="${meta.cls}">
-        <td class="sticky-col col-idx"><span class="row-num">${idx + 1}</span></td>
+      <tr class="${trCls}">
+        <td class="sticky-col col-idx">${idxCell}</td>
         <td class="sticky-col col-stock">
           <div class="stock-cell">
             <span class="stock-name">${s.name}</span>
             <span class="stock-code">${s.code}</span>
+            ${leaderBadge}
           </div>
         </td>
         <td>${catBadge}</td>
