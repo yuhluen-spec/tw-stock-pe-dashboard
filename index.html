@@ -62,13 +62,17 @@
           <i class="fa-solid fa-chart-area"></i>
           <span>大盤指數</span>
         </a>
-        <a class="nav-link" id="navLinkFormula" href="#formula">
-          <i class="fa-solid fa-function"></i>
-          <span>計算說明</span>
+        <a class="nav-link" id="navLinkMacro" href="#macro-commodities">
+          <i class="fa-solid fa-earth-americas"></i>
+          <span>焦點商品與運價</span>
         </a>
         <a class="nav-link" id="navLinkUsStocks" href="#us-stocks">
           <i class="fa-solid fa-globe"></i>
           <span>美股個股</span>
+        </a>
+        <a class="nav-link" id="navLinkFormula" href="#formula">
+          <i class="fa-solid fa-function"></i>
+          <span>計算說明</span>
         </a>
       </nav>
 
@@ -271,6 +275,40 @@
                 </thead>
                 <tbody id="indicesTableBody">
                   <tr><td colspan="10" style="text-align:center;padding:2rem;"><i class="fa-solid fa-spinner fa-spin"></i> 大盤指數數據載入中…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Global Macro Commodities & Freight Section ────────── -->
+        <section class="indices-section" id="macro-commodities">
+          <div class="section-header-wrap">
+            <h2 class="section-title">
+              <i class="fa-solid fa-earth-americas"></i> 全球焦點商品 ‧ 航運運價與加密貨幣
+            </h2>
+            <button class="query-btn refresh-btn" id="btnRefreshMacroAssets">
+              <i class="fa-solid fa-rotate"></i>
+              <span>即時刷新商品數據</span>
+            </button>
+          </div>
+          <div class="table-outer">
+            <div class="table-container">
+              <table class="stock-table indices-table">
+                <thead>
+                  <tr>
+                    <th class="col-idx">#</th>
+                    <th class="col-stock">商品 / 運價指數</th>
+                    <th class="col-cat">類別</th>
+                    <th class="col-price">最新報價 / 指數</th>
+                    <th class="col-eps">漲跌 (幅)</th>
+                    <th class="col-ma">月線 (20MA)</th>
+                    <th class="col-ma">季線 (60MA)</th>
+                    <th class="col-ma">日 KD (9,3,3)</th>
+                  </tr>
+                </thead>
+                <tbody id="macroAssetsTableBody">
+                  <tr><td colspan="8" style="text-align:center;padding:2rem;"><i class="fa-solid fa-spinner fa-spin"></i> 全球商品與運價數據載入中…</td></tr>
                 </tbody>
               </table>
             </div>

@@ -1,7 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/stocks",    "destination": "/api/index.py" },
-    { "source": "/api/indices",   "destination": "/api/index.py" },
-    { "source": "/api/us_stocks", "destination": "/api/index.py" }
+    { "source": "/api/stocks",       "destination": "/api/index.py" },
+    { "source": "/api/indices",      "destination": "/api/index.py" },
+    { "source": "/api/us_stocks",    "destination": "/api/index.py" },
+    { "source": "/api/macro_assets", "destination": "/api/index.py" }
   ]
 }

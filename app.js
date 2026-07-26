@@ -828,6 +828,81 @@ function renderIndicesTable() {
         <td>` + maStatusHtml(item.ma240, item.ma240Dir, item.ma240Streak, item.price, '年線') + `</td>
         <td>` + kdHtml(item.kVal, item.dVal) + `</td>
       </tr>`;
+}
+
+/* ─── Fetch and Render Global Macro Assets & Freight ─────────────── */
+let macroAssetsData = [];
+async function fetchMacroAssetsData(forceRefresh = false) {
+  const tbody = document.getElementById('macroAssetsTableBody');
+  if (tbody && macroAssetsData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;"><i class="fa-solid fa-spinner fa-spin"></i> 全球商品數據載入中…</td></tr>';
+  }
+  const btn = document.getElementById('btnRefreshMacroAssets');
+  if (btn) { btn.disabled = true; btn.style.display='inline-flex'; btn.style.alignItems='center'; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="flex-shrink:0;"></i> <span>更新中…</span>'; }
+  try {
+    const res = await fetch('/api/macro_assets' + (forceRefresh ? '?force=true' : ''));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.assets) {
+      macroAssetsData = data.assets;
+      renderMacroAssetsTable();
+      if (forceRefresh) showToast('已更新全球商品與運價數據！');
+    }
+  } catch (err) {
+    console.error('Fetch macro assets failed:', err);
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f87171;padding:2rem;">全球商品數據載入失敗，請重試。</td></tr>';
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> <span>即時刷新商品數據</span>'; }
+  }
+}
+
+const MACRO_CAT_COLORS = {
+  '能源期貨': { bg: 'rgba(234,179,8,0.18)', color: '#eab308' },
+  '貴金屬':   { bg: 'rgba(245,158,11,0.18)', color: '#fbbf24' },
+  '加密貨幣': { bg: 'rgba(168,85,247,0.18)', color: '#a855f7' },
+  '航運運價': { bg: 'rgba(56,189,248,0.18)', color: '#38bdf8' }
+};
+
+function renderMacroAssetsTable() {
+  const tbody = document.getElementById('macroAssetsTableBody');
+  if (!tbody) return;
+  if (!macroAssetsData || macroAssetsData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;">無焦點商品數據</td></tr>';
+    return;
+  }
+  tbody.innerHTML = macroAssetsData.map((item, idx) => {
+    const chgCls = item.change > 0 ? 'val-up' : (item.change < 0 ? 'val-down' : '');
+    const sign = item.change > 0 ? '+' : '';
+    const catStyle = MACRO_CAT_COLORS[item.category] || { bg: 'rgba(100,116,139,0.18)', color: '#64748b' };
+    const catBadge = `<span class="cat-badge" style="background:${catStyle.bg};color:${catStyle.color}">${item.category}</span>`;
+    
+    let priceFormatted = Number(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (item.unit) priceFormatted += ` <span style="font-size:0.7rem;color:var(--text-dim);font-weight:normal;">${item.unit}</span>`;
+    
+    const changeText = sign + item.change.toFixed(2) + ' (' + sign + item.changePct.toFixed(2) + '%)';
+    
+    const ma20Html = item.isFreight ? '<span style="color:var(--text-dim)">— 週報指數</span>' : maStatusHtml(item.ma20, item.ma20Dir, item.ma20Streak, item.price, '月線');
+    const ma60Html = item.isFreight ? '<span style="color:var(--text-dim)">— 週報指數</span>' : maStatusHtml(item.ma60, item.ma60Dir, item.ma60Streak, item.price, '季線');
+    const kdHtmlStr = item.isFreight ? '<span style="color:var(--text-dim)">— 週報指數</span>' : kdHtml(item.kVal, item.dVal);
+    
+    return `
+      <tr>
+        <td class="col-idx"><span class="row-num">${idx + 1}</span></td>
+        <td class="col-stock">
+          <div class="stock-cell">
+            <span class="stock-name">${item.name}</span>
+            <span class="stock-code">${item.code}</span>
+          </div>
+        </td>
+        <td>${catBadge}</td>
+        <td><span class="val-num" style="font-weight:700;">${priceFormatted}</span></td>
+        <td class="${chgCls}"><span class="val-num" style="font-weight:600;">${changeText}</span></td>
+        <td>${ma20Html}</td>
+        <td>${ma60Html}</td>
+        <td>${kdHtmlStr}</td>
+      </tr>`;
   }).join('');
 }
 
@@ -1319,6 +1394,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // US Stocks
   fetchUsStockData();
   setupUsModalAutocomplete();
+  // Macro Assets
+  fetchMacroAssetsData();
+  document.getElementById('btnRefreshMacroAssets')?.addEventListener('click', () => fetchMacroAssetsData(true));
+  document.getElementById('navLinkMacro')?.addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('macro-commodities')?.scrollIntoView({ behavior: 'smooth' });
+  });
   document.getElementById('btnRefreshUsStocks')?.addEventListener('click', () => fetchUsStockData(true));
   document.getElementById('btnAddUsStock')?.addEventListener('click', () => openUsModal());
   document.getElementById('navLinkUsStocks')?.addEventListener('click', e => {
