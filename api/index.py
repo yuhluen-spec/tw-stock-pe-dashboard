@@ -227,47 +227,28 @@ def serve_static(filename):
 
 def call_gas_api(url, payload=None):
     """
-    Call Google Apps Script Web App API.
-    GAS always redirects POST → GET on 302. We handle POST by:
-      1. Sending the POST and catching the 302 redirect location.
-      2. Re-POSTing to the final redirect URL with the same body.
-    GET requests are handled normally (urllib follows redirects automatically).
+    Call Google Apps Script Web App API via GET.
+    urllib follows GAS redirects automatically for GET requests.
     """
     ctx = ssl._create_unverified_context()
-    headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0'
-    }
-
-    if payload is None:
-        # Simple GET – urllib follows redirects automatically
-        req = urllib.request.Request(url, headers=headers, method='GET')
-        with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
-            return json.loads(resp.read().decode('utf-8'))
-
-    # POST path: need to preserve body through GAS 302 redirect
-    data_bytes = json.dumps(payload).encode('utf-8')
-
-    # Step 1 – send POST to original URL; capture 302 Location without following
-    final_url = url
-    try:
-        req = urllib.request.Request(url, data=data_bytes, headers=headers, method='POST')
-        with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
-            # No redirect – direct success (unlikely for GAS but handle it)
-            return json.loads(resp.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        if e.code in (301, 302, 303, 307, 308):
-            location = e.headers.get('Location')
-            if location:
-                final_url = location
-        else:
-            raise
-
-    # Step 2 – re-POST to the redirected URL with the same body
-    req2 = urllib.request.Request(final_url, data=data_bytes, headers=headers, method='POST')
-    with urllib.request.urlopen(req2, context=ctx, timeout=10) as resp:
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    req = urllib.request.Request(url, headers=headers, method='GET')
+    with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
         return json.loads(resp.read().decode('utf-8'))
 
+def call_gas_api_write(base_url, payload):
+    """
+    Send a write operation (save/delete) to GAS via GET + JSON payload param.
+    GAS doGet reads e.parameter.payload and dispatches accordingly.
+    This avoids the GAS POST redirect problem entirely.
+    """
+    ctx = ssl._create_unverified_context()
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    encoded = urllib.parse.urlencode({'payload': json.dumps(payload)})
+    full_url = f"{base_url}?{encoded}"
+    req = urllib.request.Request(full_url, headers=headers, method='GET')
+    with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
+        return json.loads(resp.read().decode('utf-8'))
 
 
 def get_stocks_from_sheet():
@@ -968,7 +949,7 @@ def save_stock():
     }
     
     try:
-        res = call_gas_api(gas_url, payload)
+        res = call_gas_api_write(gas_url, payload)
         SERVER_CACHE.clear()
         return jsonify(res)
     except Exception as e:
@@ -996,7 +977,7 @@ def delete_stock_api():
     }
     
     try:
-        res = call_gas_api(gas_url, payload)
+        res = call_gas_api_write(gas_url, payload)
         SERVER_CACHE.clear()
         return jsonify(res)
     except Exception as e:
