@@ -224,6 +224,66 @@ def serve_static(filename):
         return send_from_directory(BASE_DIR, filename)
     return send_from_directory(BASE_DIR, 'index.html')
 
+def get_all_raw_stocks(date_param, ctx, force_refresh=False):
+    date_yyyymmdd = date_param.replace('-', '')
+    now = time.time()
+    raw_cache_key = f"raw_prices_{date_yyyymmdd}"
+    if not force_refresh and raw_cache_key in SERVER_CACHE:
+        entry = SERVER_CACHE[raw_cache_key]
+        if now - entry['ts'] < CACHE_TTL:
+            return entry['data']
+
+    # Parallel Execution: Fetch TWSE & TPEX prices
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        twse_future = executor.submit(fetch_twse_prices, date_yyyymmdd, ctx)
+        tpex_future = executor.submit(fetch_tpex_prices, date_param, ctx)
+        twse_prices = twse_future.result()
+        tpex_prices = tpex_future.result()
+
+    all_raw_stocks = {**twse_prices, **tpex_prices}
+    SERVER_CACHE[raw_cache_key] = {
+        'ts': now,
+        'data': all_raw_stocks
+    }
+    return all_raw_stocks
+
+@app.route('/api/search', methods=['GET'])
+def search_stocks():
+    q = request.args.get('q', '').strip()
+    if not q:
+        return jsonify([])
+        
+    date_param = request.args.get('date', '2026-07-21')
+    ctx = ssl._create_unverified_context()
+    
+    try:
+        all_raw_stocks = get_all_raw_stocks(date_param, ctx, force_refresh=False)
+    except Exception as e:
+        print(f"Error fetching all raw stocks: {e}")
+        all_raw_stocks = {}
+        
+    matches = []
+    q_lower = q.lower()
+    for code, info in all_raw_stocks.items():
+        name = info.get('name', '')
+        if q_lower in code.lower() or q_lower in name.lower():
+            matches.append({
+                'code': code,
+                'name': name,
+                'category': STOCK_CATEGORY_MAP.get(code, '台股個股')
+            })
+            
+    # Sort matches: exact matches first, then starts-with, then others
+    def sort_key(item):
+        c_match = item['code'].lower() == q_lower
+        n_match = item['name'].lower() == q_lower
+        c_start = item['code'].lower().startswith(q_lower)
+        n_start = item['name'].lower().startswith(q_lower)
+        return (not (c_match or n_match), not (c_start or n_start), len(item['name']))
+        
+    matches.sort(key=sort_key)
+    return jsonify(matches[:7])
+
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
     date_param = request.args.get('date', '2026-07-21')
@@ -250,20 +310,22 @@ def get_stocks():
             })
 
     ctx = ssl._create_unverified_context()
-
-    # Parallel Execution: Fetch TWSE & TPEX prices
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        twse_future = executor.submit(fetch_twse_prices, date_yyyymmdd, ctx)
-        tpex_future = executor.submit(fetch_tpex_prices, date_param, ctx)
-
-        twse_prices = twse_future.result()
-        tpex_prices = tpex_future.result()
-
-    all_raw_stocks = {**twse_prices, **tpex_prices}
+    all_raw_stocks = get_all_raw_stocks(date_param, ctx, force_refresh)
 
     # Determine target stock codes
     if req_code:
-        target_codes = [req_code]
+        # Check if req_code matches a code directly
+        if req_code in all_raw_stocks:
+            target_codes = [req_code]
+        else:
+            # Check if it matches a name (case-insensitive, exact or partial)
+            matched_codes = [code for code, info in all_raw_stocks.items() if req_code.lower() in info.get('name', '').lower()]
+            if matched_codes:
+                # Sort to put exact matches first, then shorter names
+                matched_codes.sort(key=lambda c: (all_raw_stocks[c]['name'].lower() != req_code.lower(), len(all_raw_stocks[c]['name'])))
+                target_codes = [matched_codes[0]]
+            else:
+                target_codes = [req_code]
     elif req_all:
         target_codes = list(all_raw_stocks.keys())
     else:

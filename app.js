@@ -627,21 +627,9 @@ function setupModalStockAutocomplete() {
     }
   });
 
-  searchInput.addEventListener('input', () => {
-    const q = searchInput.value.trim().toLowerCase();
-    if (!q) {
-      box.style.display = 'none';
-      return;
-    }
-    const matches = TW_STOCK_MASTER.filter(s => 
-      s.code.toLowerCase().includes(q) || 
-      s.name.toLowerCase().includes(q) ||
-      s.category.toLowerCase().includes(q)
-    ).slice(0, 7);
-    if (matches.length === 0) {
-      box.style.display = 'none';
-      return;
-    }
+  let searchTimeout = null;
+
+  function renderSuggestions(matches) {
     list.innerHTML = matches.map(s => `
       <div class="suggestion-item" data-code="${s.code}" data-name="${s.name}" data-cat="${s.category}">
         <div class="sug-stock">
@@ -660,6 +648,52 @@ function setupModalStockAutocomplete() {
         selectStockSuggestion(code, name, category);
       });
     });
+  }
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) {
+      box.style.display = 'none';
+      if (searchTimeout) clearTimeout(searchTimeout);
+      return;
+    }
+
+    // 1. First search client-side TW_STOCK_MASTER immediately for fast feedback
+    const localMatches = TW_STOCK_MASTER.filter(s => 
+      s.code.toLowerCase().includes(q) || 
+      s.name.toLowerCase().includes(q) ||
+      s.category.toLowerCase().includes(q)
+    ).slice(0, 7);
+
+    if (localMatches.length > 0) {
+      renderSuggestions(localMatches);
+    }
+
+    // 2. Debounce and fetch online suggestions from backend
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    const spinner = document.getElementById('modalSearchSpinner');
+    if (spinner) spinner.style.display = 'inline-block';
+
+    searchTimeout = setTimeout(async () => {
+      try {
+        const datePicker = document.getElementById('datePicker');
+        const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+        const res = await fetch(`/api/search?date=${dateStr}&q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const matches = await res.json();
+          if (matches && matches.length > 0) {
+            renderSuggestions(matches);
+          } else if (localMatches.length === 0) {
+            box.style.display = 'none';
+          }
+        }
+      } catch (err) {
+        console.error('Search autocomplete failed:', err);
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+      }
+    }, 250);
   });
 }
 function selectStockSuggestion(code, name, category) {
@@ -1476,15 +1510,17 @@ async function fetchLiveStockInModal() {
   const searchInput = document.getElementById('modalStockSearch');
   const codeInput = document.getElementById('inputCode');
   const queryRaw = (searchInput?.value || codeInput?.value || '').trim();
-  const codeMatch = queryRaw.match(/\d{4,5}/) || queryRaw.match(/[A-Za-z0-9]{3,6}/);
   
-  if (!queryRaw || !codeMatch) {
-    showToast('請在搜尋框輸入股票代號（例如：2317、2383、00878、3665）');
+  if (!queryRaw) {
+    showToast('請在搜尋框輸入股票代號或名稱');
     if (searchInput) searchInput.focus();
     return;
   }
 
-  const code = codeMatch[0];
+  // If the query contains both code and name, like "2330 台積電", extract the code
+  const codeMatch = queryRaw.match(/\d{4,5}/) || queryRaw.match(/[A-Za-z0-9]{3,6}/);
+  const codeOrName = codeMatch ? codeMatch[0] : queryRaw;
+
   const spinner = document.getElementById('modalSearchSpinner');
   const btn = document.getElementById('btnSearchLiveStock');
   
@@ -1497,11 +1533,11 @@ async function fetchLiveStockInModal() {
   try {
     const datePicker = document.getElementById('datePicker');
     const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
-    const res = await fetch(`/api/stocks?date=${dateStr}&code=${code}`);
+    const res = await fetch(`/api/stocks?date=${dateStr}&code=${encodeURIComponent(codeOrName)}`);
     
     if (res.ok) {
       const data = await res.json();
-      const match = data.stocks?.find(s => s.code === code) || data.stocks?.[0];
+      const match = data.stocks?.[0];
       
       if (match) {
         currentModalFetchedStock = match;
@@ -1524,7 +1560,7 @@ async function fetchLiveStockInModal() {
 
         showToast(`✅ 成功取得 [${match.code} ${match.name}] 最新收盤價與數據！`);
       } else {
-        showToast(`⚠️ 查無代號 [${code}] 數據，請確認代號是否正確。`);
+        showToast(`⚠️ 查無 [${codeOrName}] 數據，請確認代號或名稱是否正確。`);
       }
     }
   } catch (err) {
