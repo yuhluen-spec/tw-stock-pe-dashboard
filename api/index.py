@@ -917,6 +917,39 @@ def get_us_stocks():
     SERVER_CACHE[cache_key] = {'ts': now, 'stocks': results}
     return jsonify({'status': 'ok', 'cached': False, 'stocks': results})
 
+@app.route('/api/debug/gas', methods=['GET'])
+def debug_gas():
+    """Diagnostic endpoint: tests GAS write with a dummy stock and returns raw response."""
+    if 'user_email' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    gas_url = os.environ.get('GAS_API_URL', '')
+    gas_key = os.environ.get('GAS_SECRET_KEY', '')
+    test_payload = {
+        'key': gas_key,
+        'action': 'save_stock',
+        'stock': {
+            'code': 'DEBUG_TEST',
+            'name': 'Debug Test',
+            'category': 'Debug',
+            'eps2025': None,
+            'eps2026q1': None,
+            'eps2026q2': None,
+            'epsTTM': None,
+            'epsFwd': None,
+            'type': 'TW'
+        }
+    }
+    encoded = urllib.parse.urlencode({'payload': json.dumps(test_payload)})
+    full_url = f"{gas_url}?{encoded}"
+    try:
+        ctx = ssl._create_unverified_context()
+        req = urllib.request.Request(full_url, headers={'User-Agent': 'Mozilla/5.0'}, method='GET')
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
+            raw = resp.read().decode('utf-8')
+            return jsonify({'status': 'ok', 'gas_response': raw, 'gas_url_prefix': gas_url[:60], 'key_len': len(gas_key)})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e), 'gas_url_prefix': gas_url[:60]})
+
 @app.route('/api/stocks/save', methods=['POST'])
 def save_stock():
     if 'user_email' not in session:
