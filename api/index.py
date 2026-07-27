@@ -6,9 +6,10 @@ import json
 import time
 import datetime
 from concurrent.futures import ThreadPoolExecutor
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, session
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'default-stock-pe-dashboard-secret-key-12938')
 
 # Base directory for static files
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -224,6 +225,144 @@ def serve_static(filename):
         return send_from_directory(BASE_DIR, filename)
     return send_from_directory(BASE_DIR, 'index.html')
 
+def call_gas_api(url, payload=None):
+    """
+    Call Google Apps Script Web App API.
+    Handles HTTP 302 Redirects manually to ensure compatibility with urllib.
+    """
+    ctx = ssl._create_unverified_context()
+    headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+    }
+    if payload is not None:
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+    else:
+        req = urllib.request.Request(url, headers=headers, method='GET')
+        
+    try:
+        with urllib.request.urlopen(req, context=ctx, timeout=8) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        if e.code in (301, 302, 303, 307, 308):
+            redirect_url = e.headers.get('Location')
+            req_redir = urllib.request.Request(redirect_url, headers=headers, method='GET')
+            with urllib.request.urlopen(req_redir, context=ctx, timeout=8) as response:
+                return json.loads(response.read().decode('utf-8'))
+        raise e
+
+def get_stocks_from_sheet():
+    gas_url = os.environ.get('GAS_API_URL')
+    gas_key = os.environ.get('GAS_SECRET_KEY')
+    if not gas_url or not gas_key:
+        return []
+    try:
+        url = f"{gas_url}?key={urllib.parse.quote(gas_key)}&action=get_stocks"
+        res = call_gas_api(url)
+        if res.get('status') == 'ok':
+            return res.get('data', [])
+    except Exception as e:
+        print(f"Error fetching stocks from sheet: {e}")
+    return []
+
+def get_allowed_emails():
+    gas_url = os.environ.get('GAS_API_URL')
+    gas_key = os.environ.get('GAS_SECRET_KEY')
+    if not gas_url or not gas_key:
+        return ['yuhluen@gmail.com']
+    try:
+        url = f"{gas_url}?key={urllib.parse.quote(gas_key)}&action=get_users"
+        res = call_gas_api(url)
+        if res.get('status') == 'ok':
+            return [str(row.get('email', '')).strip().lower() for row in res.get('data', []) if row.get('email')]
+    except Exception as e:
+        print(f"Error fetching allowed emails: {e}")
+    return ['yuhluen@gmail.com']
+
+def is_email_allowed(email):
+    allowed_list = get_allowed_emails()
+    return email.lower() in allowed_list
+
+def verify_google_id_token(token, client_id):
+    url = f"https://oauth2.googleapis.com/tokeninfo?id_token={token}"
+    ctx = ssl._create_unverified_context()
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, context=ctx, timeout=5) as res:
+            data = json.loads(res.read().decode('utf-8'))
+            if data.get('aud') == client_id:
+                return data
+    except Exception as e:
+        print(f"Token verification failed: {e}")
+    return None
+
+@app.before_request
+def restrict_api_access():
+    if request.path.startswith('/api/') and not request.path.startswith('/api/auth/'):
+        if 'user_email' not in session:
+            return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+
+@app.route('/api/auth/config', methods=['GET'])
+def get_auth_config():
+    return jsonify({
+        'google_client_id': os.environ.get('GOOGLE_CLIENT_ID', '')
+    })
+
+@app.route('/api/auth/login', methods=['POST'])
+def auth_login():
+    req_data = request.get_json() or {}
+    token = req_data.get('id_token')
+    if not token:
+        return jsonify({'status': 'error', 'message': 'Missing token'}), 400
+        
+    client_id = os.environ.get('GOOGLE_CLIENT_ID')
+    if not client_id:
+        return jsonify({'status': 'error', 'message': 'Google Client ID not configured'}), 500
+        
+    idinfo = verify_google_id_token(token, client_id)
+    if not idinfo:
+        return jsonify({'status': 'error', 'message': 'Invalid token'}), 401
+        
+    email = idinfo.get('email', '').strip().lower()
+    if not email:
+        return jsonify({'status': 'error', 'message': 'Email not found in token'}), 401
+        
+    allowed = is_email_allowed(email)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Access denied: email not in allowed list'}), 403
+        
+    session['user_email'] = email
+    session['user_name'] = idinfo.get('name', 'User')
+    session['user_picture'] = idinfo.get('picture', '')
+    
+    return jsonify({
+        'status': 'ok',
+        'user': {
+            'email': email,
+            'name': session['user_name'],
+            'picture': session['user_picture']
+        }
+    })
+
+@app.route('/api/auth/logout', methods=['POST'])
+def auth_logout():
+    session.clear()
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/auth/session', methods=['GET'])
+def auth_session():
+    if 'user_email' in session:
+        return jsonify({
+            'status': 'ok',
+            'user': {
+                'email': session['user_email'],
+                'name': session['user_name'],
+                'picture': session['user_picture']
+            }
+        })
+    return jsonify({'status': 'anonymous'})
+
 def get_all_raw_stocks(date_param, ctx, force_refresh=False):
     date_yyyymmdd = date_param.replace('-', '')
     now = time.time()
@@ -311,6 +450,10 @@ def get_stocks():
 
     ctx = ssl._create_unverified_context()
     all_raw_stocks = get_all_raw_stocks(date_param, ctx, force_refresh)
+    
+    # Load stocks from Google Sheet database
+    sheet_stocks = get_stocks_from_sheet()
+    tw_sheet_stocks = [s for s in sheet_stocks if s.get('type') == 'TW']
 
     # Determine target stock codes
     if req_code:
@@ -329,8 +472,11 @@ def get_stocks():
     elif req_all:
         target_codes = list(all_raw_stocks.keys())
     else:
-        # DEFAULT: Return core default tracked stocks + any user custom stocks!
-        target_codes = list(dict.fromkeys(DEFAULT_CORE_CODES + custom_codes))
+        if tw_sheet_stocks:
+            target_codes = [s['code'] for s in tw_sheet_stocks]
+        else:
+            # DEFAULT: Return core default tracked stocks + any user custom stocks!
+            target_codes = list(dict.fromkeys(DEFAULT_CORE_CODES + custom_codes))
 
     # Parallel EPS & MA derivation for target stocks
     eps_results = {}
@@ -350,8 +496,28 @@ def get_stocks():
         raw_info = all_raw_stocks.get(code, {})
         name = raw_info.get('name', code)
         price = raw_info.get('price', SNAPSHOT_PRICES.get(code, 100.0))
-        category = STOCK_CATEGORY_MAP.get(code, '台股個股')
-        eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
+        
+        # Load category & EPS from sheet if available, else fallback
+        sheet_stock = next((s for s in tw_sheet_stocks if s['code'] == code), None)
+        if sheet_stock:
+            category = sheet_stock.get('category') or '台股個股'
+            name = sheet_stock.get('name') or name
+            
+            def _float(v):
+                if v in (None, ''): return None
+                try: return float(v)
+                except ValueError: return None
+                
+            eps_data = {
+                'eps2025': _float(sheet_stock.get('eps2025')),
+                'eps2026q1': _float(sheet_stock.get('eps2026q1')),
+                'eps2026q2': _float(sheet_stock.get('eps2026q2')),
+                'epsTTM': _float(sheet_stock.get('epsTTM'))
+            }
+        else:
+            category = STOCK_CATEGORY_MAP.get(code, '台股個股')
+            eps_data = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
+            
         ma_info = ma_results.get(code, {})
 
         result_stocks.append({
@@ -667,15 +833,27 @@ def get_us_stocks():
     req_code      = request.args.get('code', '').strip().upper()
     now = time.time()
 
+    # Load stocks from Google Sheet database
+    sheet_stocks = get_stocks_from_sheet()
+    us_sheet_stocks = [s for s in sheet_stocks if s.get('type') == 'US']
+
     if req_code:
-        target    = [{'code': req_code, 'name': req_code, 'sector': '\u7f8e\u80a1\u500b\u80a1'}]
+        # Check if it matches a sheet stock to preserve name/sector overrides
+        sheet_stock = next((s for s in us_sheet_stocks if s['code'].upper() == req_code.upper()), None)
+        if sheet_stock:
+            target = [{'code': req_code, 'name': sheet_stock.get('name') or req_code, 'sector': sheet_stock.get('category') or '美股個股'}]
+        else:
+            target = [{'code': req_code, 'name': req_code, 'sector': '美股個股'}]
         cache_key = f'us_single_{req_code}'
     else:
-        custom_codes = [c.strip().upper() for c in req_custom.split(',') if c.strip()]
-        existing     = {s['code'] for s in US_DEFAULT_STOCKS}
-        extras       = [{'code': c, 'name': c, 'sector': '\u7f8e\u80a1\u500b\u80a1'}
-                        for c in custom_codes if c not in existing]
-        target    = list(US_DEFAULT_STOCKS) + extras
+        if us_sheet_stocks:
+            target = [{'code': s['code'], 'name': s['name'], 'sector': s.get('category') or '美股個股'} for s in us_sheet_stocks]
+        else:
+            custom_codes = [c.strip().upper() for c in req_custom.split(',') if c.strip()]
+            existing     = {s['code'] for s in US_DEFAULT_STOCKS}
+            extras       = [{'code': c, 'name': c, 'sector': '美股個股'}
+                            for c in custom_codes if c not in existing]
+            target    = list(US_DEFAULT_STOCKS) + extras
         cache_key = f'us_stocks_{req_custom}'
 
     if not force_refresh and cache_key in SERVER_CACHE:
@@ -691,9 +869,106 @@ def get_us_stocks():
             code, data = f.result()
             stock_map[code] = data
 
-    results = [stock_map[s['code']] for s in target if s['code'] in stock_map]
+    results = []
+    for s in target:
+        code = s['code']
+        if code in stock_map:
+            res_data = dict(stock_map[code])
+            # If we have a sheet definition for this US stock, override its EPS if specified in sheet
+            sheet_stock = next((x for x in us_sheet_stocks if x['code'] == code), None)
+            if sheet_stock:
+                def _float(v):
+                    if v in (None, ''): return None
+                    try: return float(v)
+                    except ValueError: return None
+                
+                s_ttm = _float(sheet_stock.get('epsTTM'))
+                s_fwd = _float(sheet_stock.get('epsFwd'))
+                
+                if s_ttm is not None: res_data['epsTTM'] = s_ttm
+                if s_fwd is not None: res_data['epsFwd'] = s_fwd
+                
+                # Re-calculate P/E multiples if EPS was overridden
+                price = res_data.get('price', 0)
+                if price > 0:
+                    if res_data['epsTTM'] and res_data['epsTTM'] > 0:
+                        res_data['peTTM'] = round(price / res_data['epsTTM'], 2)
+                    else:
+                        res_data['peTTM'] = None
+                    if res_data['epsFwd'] and res_data['epsFwd'] > 0:
+                        res_data['peFwd'] = round(price / res_data['epsFwd'], 2)
+                    else:
+                        res_data['peFwd'] = None
+            results.append(res_data)
+
     SERVER_CACHE[cache_key] = {'ts': now, 'stocks': results}
     return jsonify({'status': 'ok', 'cached': False, 'stocks': results})
+
+@app.route('/api/stocks/save', methods=['POST'])
+def save_stock():
+    if 'user_email' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+        
+    gas_url = os.environ.get('GAS_API_URL')
+    gas_key = os.environ.get('GAS_SECRET_KEY')
+    if not gas_url or not gas_key:
+        return jsonify({'status': 'error', 'message': 'Google Sheets backend not configured'}), 500
+        
+    req_data = request.get_json() or {}
+    code = req_data.get('code', '').strip()
+    if not code:
+        return jsonify({'status': 'error', 'message': 'Missing stock code'}), 400
+        
+    payload = {
+        'key': gas_key,
+        'action': 'save_stock',
+        'stock': {
+            'code': code,
+            'name': req_data.get('name', code).strip(),
+            'category': req_data.get('category', '').strip(),
+            'eps2025': req_data.get('eps2025'),
+            'eps2026q1': req_data.get('eps2026q1'),
+            'eps2026q2': req_data.get('eps2026q2'),
+            'epsTTM': req_data.get('epsTTM'),
+            'epsFwd': req_data.get('epsFwd'),
+            'type': req_data.get('type', 'TW').strip().upper()
+        }
+    }
+    
+    try:
+        res = call_gas_api(gas_url, payload)
+        SERVER_CACHE.clear()
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/stocks/delete', methods=['POST'])
+def delete_stock_api():
+    if 'user_email' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+        
+    gas_url = os.environ.get('GAS_API_URL')
+    gas_key = os.environ.get('GAS_SECRET_KEY')
+    if not gas_url or not gas_key:
+        return jsonify({'status': 'error', 'message': 'Google Sheets backend not configured'}), 500
+        
+    req_data = request.get_json() or {}
+    code = req_data.get('code', '').strip()
+    if not code:
+        return jsonify({'status': 'error', 'message': 'Missing stock code'}), 400
+        
+    payload = {
+        'key': gas_key,
+        'action': 'delete_stock',
+        'code': code
+    }
+    
+    try:
+        res = call_gas_api(gas_url, payload)
+        SERVER_CACHE.clear()
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 # ─── Global Macro Commodities, Freight & Crypto ──────────────────────────────

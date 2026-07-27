@@ -23,6 +23,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
+  <!-- Google Sign-In -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -89,9 +91,17 @@
       </div>
 
       <div class="sidebar-footer">
-        <div class="status-indicator">
+        <div class="status-indicator" style="margin-bottom: 0.5rem;">
           <span class="status-dot"></span>
           <span id="sidebarStatusText">資料載入中…</span>
+        </div>
+        <div class="user-profile" id="userProfileSection" style="display:none; align-items:center; gap:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border);">
+          <img id="userAvatar" src="" alt="User Avatar" style="width:28px; height:28px; border-radius:50%; object-fit:cover; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="flex-grow:1; min-width:0;">
+            <div id="userName" style="font-size:0.75rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">User</div>
+            <div id="userEmail" style="font-size:0.62rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">user@gmail.com</div>
+          </div>
+          <button id="btnLogout" class="icon-btn" title="登出" style="padding:0.25rem; font-size:0.75rem; opacity:0.7; cursor:pointer; background:none; border:none; color:var(--text-muted);"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
       </div>
     </aside>
@@ -592,6 +602,30 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Auth Login Overlay -->
+  <div class="auth-overlay" id="authOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,15,30,0.85); backdrop-filter:blur(20px); z-index:9999; align-items:center; justify-content:center; padding:1rem;">
+    <div class="auth-box" style="background:rgba(13,24,47,0.75); border:1px solid rgba(56,189,248,0.25); border-radius:16px; padding:2.5rem; width:100%; max-width:400px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.6); position:relative; overflow:hidden;">
+      <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(56,189,248,0.06) 0%, rgba(0,0,0,0) 70%); z-index:1; pointer-events:none;"></div>
+      <div style="position:relative; z-index:2;">
+        <div style="width:64px; height:64px; background:linear-gradient(135deg, #0ea5e9, #6366f1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem; box-shadow:0 8px 20px rgba(14,165,233,0.35);">
+          <i class="fa-solid fa-arrow-trend-up" style="font-size:1.8rem; color:#fff;"></i>
+        </div>
+        <h2 style="font-family:'Outfit', 'Noto Sans TC', sans-serif; font-weight:700; font-size:1.5rem; color:#fff; margin-bottom:0.5rem; letter-spacing:0.5px;">台股與美股本益比分析</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:2rem; line-height:1.5;">本系統僅限受邀管理員使用，請使用您的 Google 帳戶登入以繼續。</p>
+        
+        <!-- Google Sign-in Buttons -->
+        <div style="display:flex; justify-content:center; margin-bottom:1rem;">
+          <div id="googleBtnContainer"></div>
+        </div>
+        
+        <!-- Error Notice -->
+        <div id="authErrorMsg" style="display:none; color:#f87171; background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.2); border-radius:8px; padding:0.75rem; font-size:0.8rem; margin-top:1.5rem; line-height:1.4;">
+          登入失敗，請確認是否為受邀帳號。
+        </div>
+      </div>
     </div>
   </div>
 

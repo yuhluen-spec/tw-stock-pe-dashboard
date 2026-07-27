@@ -600,6 +600,10 @@ async function fetchStockData(dateStr, forceRefresh = false) {
     }
   } catch (err) {
     console.error(`❌ [台股更新失敗]`, err);
+    if (err.message.includes('401') || err.message.includes('403') || err.message.includes('Unauthorized')) {
+      showLoginOverlay();
+      return;
+    }
     if (updateEl) updateEl.textContent = '載入失敗，請重試';
     if (sideEl) sideEl.textContent = '載入失敗';
   } finally {
@@ -788,17 +792,29 @@ function closeModal() {
   document.getElementById('stockModal')?.classList.remove('show');
 }
 window.editStock = (id) => { const s = stockList.find(x => x.id === id); if (s) openModal(s); };
-window.deleteStock = (id) => {
+window.deleteStock = async (id) => {
   const s = stockList.find(x => x.id === id || x.code === id);
   if (s && confirm(`確定要刪除 ${s.code} ${s.name}？`)) {
-    stockList = stockList.filter(x => x.id !== id && x.code !== s.code);
-    saveCustomStocks(stockList);
-    const datePicker = document.getElementById('datePicker');
-    const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
-    localStorage.removeItem(cacheKey(dateStr));
-    renderTabs();
-    renderTable();
-    showToast(`已刪除股票 ${s.code} ${s.name}`);
+    try {
+      const res = await fetch('/api/stocks/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: s.code })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast(`已從 Google Sheets 刪除股票 ${s.code} ${s.name}`);
+        const datePicker = document.getElementById('datePicker');
+        const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+        fetchStockData(dateStr, true);
+      } else {
+        showToast(`刪除失敗: ${data.message}`);
+      }
+    } catch (err) {
+      console.error('Delete stock failed:', err);
+      showToast('刪除失敗，請檢查網路連線');
+    }
   }
 };
 /* ─── Fetch and Render Market Indices ───────────────────────────── */
@@ -818,6 +834,10 @@ async function fetchIndicesData(forceRefresh = false) {
     }
   } catch (err) {
     console.error('Fetch indices failed:', err);
+    if (err.message.includes('401') || err.message.includes('403') || err.message.includes('Unauthorized')) {
+      showLoginOverlay();
+      return;
+    }
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#f87171;padding:2rem;">大盤數據載入失敗，請重試。</td></tr>';
     }
@@ -1137,14 +1157,27 @@ function renderUsTable() {
 }
 
 /* ─── Delete US Stock ────────────────────────────────────────── */
-window.deleteUsStock = (code) => {
+window.deleteUsStock = async (code) => {
   const s = usStockList.find(x => x.code === code);
   if (s && confirm(`確定要從列表移除 ${s.code} ${s.name}？`)) {
-    usStockList = usStockList.filter(x => x.code !== code);
-    const customs = loadUsCustomStocks().filter(x => x.code !== code);
-    localStorage.setItem(US_CUSTOM_KEY, JSON.stringify(customs));
-    renderUsTabs(); renderUsTable();
-    showToast(`已移除美股 ${code}`);
+    try {
+      const res = await fetch('/api/stocks/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: s.code })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast(`已移除美股 ${code}`);
+        fetchUsStockData(true);
+      } else {
+        showToast(`移除失敗: ${data.message}`);
+      }
+    } catch (err) {
+      console.error('Delete US stock failed:', err);
+      showToast('移除失敗，請檢查網路連線');
+    }
   }
 };
 
@@ -1263,6 +1296,10 @@ async function fetchUsStockData(forceRefresh = false) {
     }
   } catch (err) {
     console.error('美股資料載入失敗:', err);
+    if (err.message.includes('401') || err.message.includes('403') || err.message.includes('Unauthorized')) {
+      showLoginOverlay();
+      return;
+    }
     if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#f87171;padding:2rem;">美股資料載入失敗，請稍後重試。</td></tr>';
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> <span>即時刷新</span>'; }
@@ -1316,11 +1353,8 @@ function initScrollShadow() {
 }
 /* ─── DOMContentLoaded ─────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  const datePicker = document.getElementById('datePicker');
-  const latestDate = getLatestTradingDate();
-  if (datePicker) datePicker.value = latestDate;
-  fetchStockData(latestDate);
-  fetchIndicesData();
+  checkAuthSession();
+  document.getElementById('btnLogout')?.addEventListener('click', handleLogout);
   document.getElementById("btnRefreshIndices")?.addEventListener("click", () => fetchIndicesData(true));
   document.getElementById("navLinkIndices")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -1383,51 +1417,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeVal = codeEl ? codeEl.value.trim() : '';
     const itemKey = codeVal || id || String(Date.now());
     const parsed = {
-      id:       itemKey,
       category: catEl ? catEl.value.trim() : '台股個股',
       code:     codeVal,
       name:     nameEl ? nameEl.value.trim() : codeVal,
       eps2025:  (eps25El && eps25El.value !== '') ? +eps25El.value : null,
       eps2026q1:(eps26q1El && eps26q1El.value !== '') ? +eps26q1El.value : null,
       eps2026q2:(eps26q2El && eps26q2El.value !== '') ? +eps26q2El.value : null,
-      price:    prEl ? +prEl.value : 0,
-      ma20:     currentModalFetchedStock?.ma20,
-      ma20Dir:  currentModalFetchedStock?.ma20Dir,
-      ma20Streak: currentModalFetchedStock?.ma20Streak,
-      ma60:     currentModalFetchedStock?.ma60,
-      ma60Dir:  currentModalFetchedStock?.ma60Dir,
-      ma60Streak: currentModalFetchedStock?.ma60Streak,
       epsTTM:   currentModalFetchedStock?.epsTTM,
-      isCustom: true
+      type:     'TW'
     };
 
-    const existingIdx = stockList.findIndex(x => x.id === itemKey || x.code === parsed.code);
-    if (existingIdx !== -1) {
-      stockList[existingIdx] = { ...stockList[existingIdx], ...parsed };
-    } else {
-      stockList.push(parsed);
+    try {
+      const res = await fetch('/api/stocks/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast(`✅ 已成功儲存個股 [${parsed.code} ${parsed.name}] 到 Google Sheets！`);
+        
+        // Reset filters so newly added stock is guaranteed to be rendered on table
+        activeCategory = 'ALL';
+        const qInput = document.getElementById('searchInput');
+        if (qInput) qInput.value = '';
+
+        closeModal();
+        
+        const datePicker = document.getElementById('datePicker');
+        const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+        fetchStockData(dateStr, true);
+      } else {
+        showToast(`❌ 儲存失敗: ${data.message}`);
+      }
+    } catch (err) {
+      console.error('Save stock to sheet failed:', err);
+      showToast('儲存失敗，請確認網路連線');
     }
-
-    saveCustomStocks(stockList);
-
-    // Invalidate local date cache so next refresh fetches with the custom code
-    const datePicker = document.getElementById('datePicker');
-    const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
-    localStorage.removeItem(cacheKey(dateStr));
-
-    // Reset filters so newly added stock is guaranteed to be rendered on table
-    activeCategory = 'ALL';
-    const qInput = document.getElementById('searchInput');
-    if (qInput) qInput.value = '';
-
-    closeModal();
-    renderTabs();
-    renderTable();
-
-    showToast(`✅ 已新增個股 [${parsed.code} ${parsed.name}] 到列表！`);
-    // Note: Do NOT call fetchStockData here – it would overwrite stockList asynchronously
-    // and cause the newly added stock to disappear. The custom stock is saved in
-    // localStorage and will be fetched (via &custom=) on the next manual refresh.
   });
   document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
   // US Stocks
@@ -1451,30 +1478,41 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('usStockModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeUsModal(); });
   document.getElementById('usSearchInput')?.addEventListener('input', renderUsTable);
   document.getElementById('usSortBySelect')?.addEventListener('change', renderUsTable);
-  document.getElementById('usStockForm')?.addEventListener('submit', e => {
+  document.getElementById('usStockForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const codeVal = (document.getElementById('usInputCode')?.value || '').trim().toUpperCase();
     if (!codeVal) { showToast('請輸入美股代號'); return; }
     const f = currentUsModalFetched;
     const parsed = {
-      id: codeVal, code: codeVal,
+      code:     codeVal,
       name:     document.getElementById('usInputName')?.value.trim()   || codeVal,
       category: document.getElementById('usInputSector')?.value.trim() || '美股個股',
-      price:    f?.price    || 0,
-      ma20:     f?.ma20,     ma20Dir: f?.ma20Dir, ma20Streak: f?.ma20Streak || 0,
-      ma60:     f?.ma60,     ma60Dir: f?.ma60Dir, ma60Streak: f?.ma60Streak || 0,
-      epsTTM:   f?.epsTTM,  epsFwd: f?.epsFwd,
-      peTTM:    f?.peTTM,   peFwd:  f?.peFwd,
-      isCustom: true,
+      epsTTM:   f?.epsTTM,
+      epsFwd:   f?.epsFwd,
+      type:     'US'
     };
-    const idx = usStockList.findIndex(x => x.code === codeVal);
-    if (idx !== -1) usStockList[idx] = { ...usStockList[idx], ...parsed };
-    else usStockList.push(parsed);
-    saveUsCustomStocks(usStockList);
-    usActiveCategory = 'ALL';
-    const qIn = document.getElementById('usSearchInput'); if (qIn) qIn.value = '';
-    closeUsModal(); renderUsTabs(); renderUsTable();
-    showToast(`✅ 已新增美股 [${codeVal} ${parsed.name}] 到列表！`);
+
+    try {
+      const res = await fetch('/api/stocks/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast(`✅ 已成功儲存美股 [${codeVal} ${parsed.name}] 到 Google Sheets！`);
+        usActiveCategory = 'ALL';
+        const qIn = document.getElementById('usSearchInput'); if (qIn) qIn.value = '';
+        closeUsModal();
+        fetchUsStockData(true);
+      } else {
+        showToast(`❌ 儲存失敗: ${data.message}`);
+      }
+    } catch (err) {
+      console.error('Save US stock failed:', err);
+      showToast('儲存失敗，請確認網路連線');
+    }
   });
   document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
   document.getElementById('navHome')?.addEventListener('click', () => {
@@ -1575,3 +1613,121 @@ async function fetchLiveStockInModal() {
   }
 }
 window.fetchLiveStockInModal = fetchLiveStockInModal;
+
+/* ─── Google Auth Integration ────────────────────────────────────────── */
+let googleClientId = '';
+
+async function checkAuthSession() {
+  try {
+    const res = await fetch('/api/auth/session');
+    const data = await res.json();
+    if (data.status === 'ok') {
+      showDashboard(data.user);
+    } else {
+      showLoginOverlay();
+    }
+  } catch (err) {
+    console.error('Check session failed:', err);
+    showLoginOverlay();
+  }
+}
+
+async function showLoginOverlay() {
+  const overlay = document.getElementById('authOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+  }
+  
+  if (!googleClientId) {
+    try {
+      const res = await fetch('/api/auth/config');
+      const data = await res.json();
+      googleClientId = data.google_client_id;
+    } catch (err) {
+      console.error('Fetch auth config failed:', err);
+    }
+  }
+  
+  if (googleClientId) {
+    google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("googleBtnContainer"),
+      { theme: "dark", size: "large", width: 280, logo_alignment: "center" }
+    );
+    google.accounts.id.prompt();
+  }
+}
+
+async function handleCredentialResponse(response) {
+  const errorMsg = document.getElementById('authErrorMsg');
+  if (errorMsg) errorMsg.style.display = 'none';
+  
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id_token: response.credential })
+    });
+    
+    const data = await res.json();
+    if (data.status === 'ok') {
+      showDashboard(data.user);
+    } else {
+      if (errorMsg) {
+        errorMsg.textContent = data.message || '登入失敗，請確認是否為受邀帳號。';
+        errorMsg.style.display = 'block';
+      }
+    }
+  } catch (err) {
+    console.error('Login request failed:', err);
+    if (errorMsg) {
+      errorMsg.textContent = '登入連線失敗，請檢查網路連線後重試。';
+      errorMsg.style.display = 'block';
+    }
+  }
+}
+
+function showDashboard(user) {
+  const overlay = document.getElementById('authOverlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+  
+  const prof = document.getElementById('userProfileSection');
+  if (prof) {
+    prof.style.display = 'flex';
+    document.getElementById('userAvatar').src = user.picture || '';
+    document.getElementById('userName').textContent = user.name || 'User';
+    document.getElementById('userEmail').textContent = user.email || '';
+  }
+  
+  initDashboardData();
+}
+
+async function handleLogout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.reload();
+  } catch (err) {
+    console.error('Logout failed:', err);
+    window.location.reload();
+  }
+}
+
+function initDashboardData() {
+  const datePicker = document.getElementById('datePicker');
+  const latestDate = getLatestTradingDate();
+  if (datePicker && !datePicker.value) datePicker.value = latestDate;
+  const currentVal = datePicker ? datePicker.value : latestDate;
+  fetchStockData(currentVal);
+  fetchIndicesData();
+  fetchUsStockData();
+}
+
+window.checkAuthSession = checkAuthSession;
+window.handleLogout = handleLogout;
