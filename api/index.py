@@ -511,21 +511,24 @@ def get_stocks():
         price = raw_info.get('price', SNAPSHOT_PRICES.get(code, 100.0))
         
         # Load category & EPS from sheet if available, else fallback
-        sheet_stock = next((s for s in tw_sheet_stocks if s['code'] == code), None)
+        sheet_stock = next((s for s in tw_sheet_stocks if str(s.get('code','')).strip() == code), None)
+
+        def _float(v):
+            if v in (None, ''): return None
+            try: return float(v)
+            except (ValueError, TypeError): return None
+
         if sheet_stock:
-            category = sheet_stock.get('category') or '台股個股'
+            category = sheet_stock.get('category') or STOCK_CATEGORY_MAP.get(code, '台股個股')
             name = sheet_stock.get('name') or name
-            
-            def _float(v):
-                if v in (None, ''): return None
-                try: return float(v)
-                except ValueError: return None
-                
+
+            # Sheet EPS takes priority; fall back to FinMind when sheet field is empty
+            derived = eps_results.get(code, EPS_DERIVED_MAP.get(code, {}))
             eps_data = {
-                'eps2025': _float(sheet_stock.get('eps2025')),
-                'eps2026q1': _float(sheet_stock.get('eps2026q1')),
-                'eps2026q2': _float(sheet_stock.get('eps2026q2')),
-                'epsTTM': _float(sheet_stock.get('epsTTM'))
+                'eps2025':   _float(sheet_stock.get('eps2025'))   or derived.get('eps2025'),
+                'eps2026q1': _float(sheet_stock.get('eps2026q1')) or derived.get('eps2026q1'),
+                'eps2026q2': _float(sheet_stock.get('eps2026q2')) or derived.get('eps2026q2'),
+                'epsTTM':    _float(sheet_stock.get('epsTTM'))    or derived.get('epsTTM'),
             }
         else:
             category = STOCK_CATEGORY_MAP.get(code, '台股個股')
