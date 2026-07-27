@@ -291,7 +291,18 @@ def verify_google_id_token(token, client_id):
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, context=ctx, timeout=5) as res:
             data = json.loads(res.read().decode('utf-8'))
-            if data.get('aud') == client_id:
+            aud = data.get('aud', '')
+            
+            # Normalize client IDs for exact comparison
+            cid_norm = client_id.strip()
+            if not cid_norm.endswith('.apps.googleusercontent.com'):
+                cid_norm += '.apps.googleusercontent.com'
+                
+            aud_norm = aud.strip()
+            if not aud_norm.endswith('.apps.googleusercontent.com'):
+                aud_norm += '.apps.googleusercontent.com'
+                
+            if aud_norm == cid_norm:
                 return data
     except Exception as e:
         print(f"Token verification failed: {e}")
@@ -305,8 +316,11 @@ def restrict_api_access():
 
 @app.route('/api/auth/config', methods=['GET'])
 def get_auth_config():
+    client_id = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
+    if client_id and not client_id.endswith('.apps.googleusercontent.com'):
+        client_id += '.apps.googleusercontent.com'
     return jsonify({
-        'google_client_id': os.environ.get('GOOGLE_CLIENT_ID', '')
+        'google_client_id': client_id
     })
 
 @app.route('/api/auth/login', methods=['POST'])
