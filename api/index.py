@@ -228,29 +228,53 @@ def serve_static(filename):
 def call_gas_api(url, payload=None):
     """
     Call Google Apps Script Web App API.
-    Handles HTTP 302 Redirects manually to ensure compatibility with urllib.
+    GAS always redirects POST requests. We handle this by:
+    1. First doing a GET to the URL to discover the final redirect URL
+    2. Then POST directly to the final URL with the payload
     """
     ctx = ssl._create_unverified_context()
     headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0'
     }
-    if payload is not None:
-        data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
-    else:
+
+    if payload is None:
+        # Simple GET request
         req = urllib.request.Request(url, headers=headers, method='GET')
-        
-    try:
-        with urllib.request.urlopen(req, context=ctx, timeout=8) as response:
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
             return json.loads(response.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        if e.code in (301, 302, 303, 307, 308):
-            redirect_url = e.headers.get('Location')
-            req_redir = urllib.request.Request(redirect_url, headers=headers, method='GET')
-            with urllib.request.urlopen(req_redir, context=ctx, timeout=8) as response:
-                return json.loads(response.read().decode('utf-8'))
-        raise e
+
+    # For POST: GAS redirects the initial POST to a new URL.
+    # We need to discover the final URL first by doing a HEAD/GET, then POST there.
+    # Strategy: send POST, follow redirect location manually, re-POST to final URL.
+    data = json.dumps(payload).encode('utf-8')
+
+    # Step 1: Send POST, catch the redirect to find final URL
+    final_url = url
+    try:
+        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+        # Temporarily disable redirect following to capture Location header
+        class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None  # Don't follow
+        opener = urllib.request.build_opener(NoRedirectHandler(), urllib.request.HTTPSHandler(context=ctx))
+        try:
+            resp = opener.open(req, timeout=10)
+            # If no redirect, read directly
+            return json.loads(resp.read().decode('utf-8'))
+        except urllib.error.HTTPError as e:
+            if e.code in (301, 302, 303, 307, 308):
+                final_url = e.headers.get('Location', url)
+            else:
+                raise e
+    except Exception as e:
+        if 'final_url' not in dir() or final_url == url:
+            raise e
+
+    # Step 2: Re-POST to the final (redirected) URL
+    req2 = urllib.request.Request(final_url, data=data, headers=headers, method='POST')
+    with urllib.request.urlopen(req2, context=ctx, timeout=10) as response:
+        return json.loads(response.read().decode('utf-8'))
 
 def get_stocks_from_sheet():
     gas_url = os.environ.get('GAS_API_URL')
