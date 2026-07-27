@@ -5,6 +5,7 @@ import ssl
 import json
 import time
 import datetime
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, jsonify, request, send_from_directory, session
 
@@ -466,7 +467,11 @@ def get_stocks():
     
     # Load stocks from Google Sheet database
     sheet_stocks = get_stocks_from_sheet()
-    tw_sheet_stocks = [s for s in sheet_stocks if s.get('type') == 'TW']
+    # Normalize: GAS may return numeric codes (e.g. 3010 as int), convert all to str
+    for s in sheet_stocks:
+        s['code'] = str(s.get('code', '')).strip()
+        s['type'] = str(s.get('type', '')).strip().upper()
+    tw_sheet_stocks = [s for s in sheet_stocks if s['type'] == 'TW' and s['code']]
 
     # Determine target stock codes
     if req_code:
@@ -486,7 +491,7 @@ def get_stocks():
         target_codes = list(all_raw_stocks.keys())
     else:
         if tw_sheet_stocks:
-            target_codes = [s['code'] for s in tw_sheet_stocks]
+            target_codes = [s['code'] for s in tw_sheet_stocks]  # already strings
         else:
             # DEFAULT: Return core default tracked stocks + any user custom stocks!
             target_codes = list(dict.fromkeys(DEFAULT_CORE_CODES + custom_codes))
@@ -560,6 +565,58 @@ def get_stocks():
         'ts': now,
         'stocks': result_stocks
     }
+
+    # ── Auto writeback: if sheet EPS was empty but we fetched EPS from FinMind,
+    #    save it back to Google Sheet so future requests skip the fetch.
+    gas_url = os.environ.get('GAS_API_URL')
+    gas_key = os.environ.get('GAS_SECRET_KEY')
+    if gas_url and gas_key:
+        def _writeback_eps(stocks_to_write):
+            for st in stocks_to_write:
+                try:
+                    payload = {
+                        'key': gas_key,
+                        'action': 'save_stock',
+                        'stock': {
+                            'code': st['code'],
+                            'name': st['name'],
+                            'category': st['category'],
+                            'eps2025': st.get('eps2025'),
+                            'eps2026q1': st.get('eps2026q1'),
+                            'eps2026q2': st.get('eps2026q2'),
+                            'epsTTM': st.get('epsTTM'),
+                            'epsFwd': st.get('epsFwd'),
+                            'type': 'TW'
+                        }
+                    }
+                    call_gas_api_write(gas_url, payload)
+                except Exception as e:
+                    print(f"EPS writeback failed for {st['code']}: {e}")
+
+        # Only writeback stocks that had empty EPS in sheet but fetched EPS from FinMind
+        needs_writeback = []
+        for st in result_stocks:
+            ss = next((s for s in tw_sheet_stocks if s['code'] == st['code']), None)
+            if ss:
+                sheet_had_eps = any([
+                    ss.get('eps2025') not in (None, ''),
+                    ss.get('eps2026q1') not in (None, ''),
+                    ss.get('eps2026q2') not in (None, ''),
+                    ss.get('epsTTM') not in (None, ''),
+                ])
+                fetched_has_eps = any([
+                    st.get('eps2025') is not None,
+                    st.get('eps2026q1') is not None,
+                    st.get('eps2026q2') is not None,
+                    st.get('epsTTM') is not None,
+                ])
+                if not sheet_had_eps and fetched_has_eps:
+                    needs_writeback.append(st)
+
+        if needs_writeback:
+            t = threading.Thread(target=_writeback_eps, args=(needs_writeback,), daemon=True)
+            t.start()
+            print(f"[EPS Writeback] Triggered for {len(needs_writeback)} stocks")
 
     return jsonify({
         'status': 'ok',
