@@ -1355,6 +1355,8 @@ function initScrollShadow() {
 document.addEventListener('DOMContentLoaded', () => {
   checkAuthSession();
   document.getElementById('btnLogout')?.addEventListener('click', handleLogout);
+  document.getElementById('sidebarBtnSync')?.addEventListener('click', syncLocalStocksToCloud);
+  document.getElementById('btnSyncTop')?.addEventListener('click', syncLocalStocksToCloud);
   document.getElementById("btnRefreshIndices")?.addEventListener("click", () => fetchIndicesData(true));
   document.getElementById("navLinkIndices")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -1731,3 +1733,90 @@ function initDashboardData() {
 
 window.checkAuthSession = checkAuthSession;
 window.handleLogout = handleLogout;
+
+/* ─── Sync Local Storage Custom Stocks to Google Sheets ───────────────── */
+async function syncLocalStocksToCloud() {
+  let localTw = [];
+  try { localTw = JSON.parse(localStorage.getItem('tw_pe_custom_user_stocks') || '[]'); } catch(e) {}
+  
+  let localUs = [];
+  try { localUs = JSON.parse(localStorage.getItem('tw_pe_us_custom_stocks') || '[]'); } catch(e) {}
+  
+  const totalTw = localTw.length;
+  const totalUs = localUs.length;
+  
+  if (totalTw === 0 && totalUs === 0) {
+    showToast('ℹ️ 本地瀏覽器中沒有發現任何自訂個股，無須同步。');
+    return;
+  }
+  
+  const confirmMsg = `偵測到您在此瀏覽器有舊有的自訂股票：\n- 台股：${totalTw} 檔\n- 美股：${totalUs} 檔\n\n是否要將這些股票全部上傳同步至 Google Sheets 雲端資料庫？\n(重複的股票會自動更新/覆蓋)`;
+  if (!confirm(confirmMsg)) return;
+  
+  showToast('⏳ 正在將本地個股同步至 Google Sheets...');
+  
+  let successCount = 0;
+  let failCount = 0;
+  
+  // Upload TW
+  for (const s of localTw) {
+    try {
+      const res = await fetch('/api/stocks/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: s.category || '台股個股',
+          code:     s.code,
+          name:     s.name || s.code,
+          eps2025:  s.eps2025,
+          eps2026q1: s.eps2026q1,
+          eps2026q2: s.eps2026q2,
+          epsTTM:   s.epsTTM,
+          type:     'TW'
+        })
+      });
+      if (res.ok) successCount++;
+      else failCount++;
+    } catch (err) {
+      failCount++;
+    }
+  }
+  
+  // Upload US
+  for (const s of localUs) {
+    try {
+      const res = await fetch('/api/stocks/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: s.category || '美股個股',
+          code:     s.code,
+          name:     s.name || s.code,
+          epsTTM:   s.epsTTM,
+          epsFwd:   s.epsFwd,
+          type:     'US'
+        })
+      });
+      if (res.ok) successCount++;
+      else failCount++;
+    } catch (err) {
+      failCount++;
+    }
+  }
+  
+  if (failCount === 0) {
+    showToast(`✅ 同步完成！成功將 ${successCount} 檔個股同步至雲端資料庫。`);
+    if (confirm('是否清除本地瀏覽器的舊快取以完成同步？')) {
+      localStorage.removeItem('tw_pe_custom_user_stocks');
+      localStorage.removeItem('tw_pe_us_custom_stocks');
+    }
+  } else {
+    showToast(`⚠️ 同步完成（有部分失敗）。成功：${successCount} 檔，失敗：${failCount} 檔。`);
+  }
+  
+  const datePicker = document.getElementById('datePicker');
+  const dateStr = datePicker ? datePicker.value : getLatestTradingDate();
+  fetchStockData(dateStr, true);
+  fetchUsStockData(true);
+}
+window.syncLocalStocksToCloud = syncLocalStocksToCloud;
