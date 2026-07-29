@@ -1472,6 +1472,10 @@ function initScrollShadow() {
 }
 /* ─── DOMContentLoaded ─────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.hash === '#knowledge-kline') {
+    window.location.href = 'knowledge.html';
+    return;
+  }
   checkAuthSession();
   document.getElementById('btnLogout')?.addEventListener('click', handleLogout);
   document.getElementById('sidebarBtnSync')?.addEventListener('click', syncLocalStocksToCloud);
