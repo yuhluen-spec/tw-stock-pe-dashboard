@@ -526,7 +526,7 @@ function updateKPIs(list) {
 }
 /* ─── LocalStorage Cache helpers ─────────────────────────────────── */
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const CACHE_PREFIX = 'tw_pe_v4_';
+const CACHE_PREFIX = 'tw_pe_v5_';
 function cacheKey(dateStr) { return CACHE_PREFIX + dateStr; }
 function loadCache(dateStr) {
   try {
@@ -545,8 +545,8 @@ function loadCache(dateStr) {
       localStorage.removeItem(cacheKey(dateStr));
       return null;
     }
-    // Reject legacy large full-market caches (>60 stocks) so default remains ~18 stocks
-    if (Array.isArray(obj.data) && obj.data.length > 60) {
+    // Reject legacy caches without rs5dStatus or >60 stocks
+    if (Array.isArray(obj.data) && (obj.data.length > 60 || (obj.data.length > 0 && !('rs5dStatus' in obj.data[0])))) {
       localStorage.removeItem(cacheKey(dateStr));
       return null;
     }
