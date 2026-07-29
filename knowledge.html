@@ -342,11 +342,11 @@
               <div class="hero-stat-label">K線型態</div>
             </div>
             <div class="hero-stat">
-              <div class="hero-stat-num" style="background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">即將</div>
+              <div class="hero-stat-num" style="background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">5</div>
               <div class="hero-stat-label">價格型態</div>
             </div>
             <div class="hero-stat">
-              <div class="hero-stat-num" style="background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">即將</div>
+              <div class="hero-stat-num" style="background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">5</div>
               <div class="hero-stat-label">基本面</div>
             </div>
           </div>
@@ -362,12 +362,12 @@
           <button class="cat-tab" data-panel="panel-pattern">
             <i class="fa-solid fa-shapes"></i>
             價格型態學
-            <span class="tab-soon">即將推出</span>
+            <span class="tab-count" style="background:rgba(168,85,247,0.15);color:#c084fc;">5</span>
           </button>
           <button class="cat-tab" data-panel="panel-fundamental">
             <i class="fa-solid fa-coins"></i>
             基本面分析
-            <span class="tab-soon">即將推出</span>
+            <span class="tab-count" style="background:rgba(245,158,11,0.15);color:#fbbf24;">5</span>
           </button>
         </div>
 
@@ -746,45 +746,233 @@
 
         <!-- ── Panel: Price Pattern ──────────────────────────────────── -->
         <div class="knowledge-panel" id="panel-pattern">
-          <div class="coming-soon-panel">
-            <div class="coming-soon-icon pattern">
-              <i class="fa-solid fa-shapes"></i>
+          <div class="knowledge-section">
+            <div class="knowledge-header-wrap">
+              <div>
+                <h2 class="section-title"><i class="fa-solid fa-shapes"></i> 經典價格型態學 (Price Patterns)</h2>
+                <p class="knowledge-subtitle">包含 W 底、M 頭、頭肩底、三角收斂與箱型突破，掌握波段關鍵買賣點與測量目標價</p>
+              </div>
             </div>
-            <div class="coming-soon-title">價格型態學 即將推出</div>
-            <div class="coming-soon-desc">
-              預計收錄頭肩頂/底、雙頂/雙底、旗形、楔形、三角收斂、箱型突破等 10+ 種經典型態，附台股實戰圖解說明。
-            </div>
-            <div class="coming-soon-chips">
-              <span class="coming-soon-chip">頭肩頂 / 底</span>
-              <span class="coming-soon-chip">雙頂 / 雙底</span>
-              <span class="coming-soon-chip">旗形</span>
-              <span class="coming-soon-chip">楔形</span>
-              <span class="coming-soon-chip">三角收斂</span>
-              <span class="coming-soon-chip">箱型突破</span>
-              <span class="coming-soon-chip">W底 / M頭</span>
-            </div>
-          </div>
+
+            <div class="knowledge-grid">
+
+              <!-- Pattern 1: W底 -->
+              <div class="kline-card" data-type="bullish" data-title="雙重底 W底 Double Bottom 底部打底 頸線突破 2330台積電">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish"><i class="fa-solid fa-arrow-trend-up"></i> 多方看漲 ‧ 底部打底</span>
+                  <span class="kline-number">01 / 05</span>
+                </div>
+                <h3 class="kline-card-title">雙重底 (W底) <span class="en-name">Double Bottom</span></h3>
+                <div class="kline-svg-wrap">
+                  <svg viewBox="0 0 220 120" class="kline-svg">
+                    <path d="M 20 20 L 60 90 L 100 45 L 140 90 L 190 20" stroke="#ef4444" stroke-width="2.5" fill="none"/>
+                    <line x1="20" y1="45" x2="200" y2="45" stroke="#eab308" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <text x="150" y="40" fill="#eab308" font-size="8" font-weight="bold">頸线 (Neckline)</text>
+                    <circle cx="60" cy="90" r="4" fill="#ef4444"/>
+                    <circle cx="140" cy="90" r="4" fill="#ef4444"/>
+                    <text x="50" y="108" fill="#ef4444" font-size="8">第一底</text>
+                    <text x="130" y="108" fill="#ef4444" font-size="8">第二底</text>
+                  </svg>
+                </div>
+                <div class="kline-info-body">
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>股價經過兩次測底未破，中間形成反彈高點（頸線）。第二底往往伴隨成交量縮，突破頸線時伴隨放量。</p></div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 操作策略：</strong><ul><li><strong>買點：</strong> 帶量突破頸線當日，或突破後拉回測試頸線不破時進場。</li><li><strong>最小漲幅目標：</strong> 頸線價格 + (頸線價格 - 底部最低價)。</li></ul></div>
+                  <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>台股案例：</strong> 2330 台積電於 2022 年底在 370-380 元打出標準 W 底後放量突破頸線，展開長期牛市。</span></div>
+                </div>
+              </div>
+
+              <!-- Pattern 2: M頭 -->
+              <div class="kline-card" data-type="bearish" data-title="雙重頂 M頭 Double Top 頭部反轉 頸線跌破">
+                <div class="kline-card-header">
+                  <span class="kline-badge bearish"><i class="fa-solid fa-arrow-trend-down"></i> 空方看跌 ‧ 頭部反轉</span>
+                  <span class="kline-number">02 / 05</span>
+                </div>
+                <h3 class="kline-card-title">雙重頂 (M頭) <span class="en-name">Double Top</span></h3>
+                <div class="kline-svg-wrap">
+                  <svg viewBox="0 0 220 120" class="kline-svg">
+                    <path d="M 20 100 L 60 30 L 100 75 L 140 30 L 190 100" stroke="#22c55e" stroke-width="2.5" fill="none"/>
+                    <line x1="20" y1="75" x2="200" y2="75" stroke="#eab308" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <text x="150" y="70" fill="#eab308" font-size="8" font-weight="bold">頸線 (Neckline)</text>
+                    <circle cx="60" cy="30" r="4" fill="#22c55e"/>
+                    <circle cx="140" cy="30" r="4" fill="#22c55e"/>
+                    <text x="50" y="20" fill="#22c55e" font-size="8">第一頂</text>
+                    <text x="130" y="20" fill="#22c55e" font-size="8">第二頂</text>
+                  </svg>
+                </div>
+                <div class="kline-info-body">
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>高檔出現兩個相近的高點，中間低點為頸線。第二頂往往量能不及第一頂（量價背離），跌破頸線即確認頭部成形。</p></div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 出場訊號：</strong><ul><li>跌破頸線支撐時應果斷停損或減碼。</li><li>跌破後反彈若無法站回頸線（反彈無力），為最後逃命點。</li></ul></div>
+                  <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>台股案例：</strong> 高檔個股在二次攻高無量時易形成 M 頭，跌破頸線後通常面臨波段修正。</span></div>
+                </div>
+              </div>
+
+              <!-- Pattern 3: 頭肩底 -->
+              <div class="kline-card" data-type="bullish" data-title="頭肩底 Head and Shoulders Bottom 底部反轉 2454聯發科">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish-strong"><i class="fa-solid fa-bolt"></i> 波段起漲 ‧ 強力打底</span>
+                  <span class="kline-number">03 / 05</span>
+                </div>
+                <h3 class="kline-card-title">頭肩底 <span class="en-name">Head & Shoulders Bottom</span></h3>
+                <div class="kline-svg-wrap">
+                  <svg viewBox="0 0 220 120" class="kline-svg">
+                    <path d="M 15 25 L 45 65 L 75 35 L 110 100 L 145 35 L 175 65 L 205 20" stroke="#ef4444" stroke-width="2.5" fill="none"/>
+                    <line x1="20" y1="35" x2="200" y2="35" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <text x="155" y="30" fill="#38bdf8" font-size="8" font-weight="bold">頸線突破位</text>
+                    <text x="35" y="78" fill="#ef4444" font-size="8">左肩</text>
+                    <text x="100" y="115" fill="#ef4444" font-size="8" font-weight="bold">頭部</text>
+                    <text x="165" y="78" fill="#ef4444" font-size="8">右肩</text>
+                  </svg>
+                </div>
+                <div class="kline-info-body">
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>包含左肩、最低的頭部與右肩。右肩低點通常高於頭部，且右肩突破頸線時需伴隨大增的成交量。</p></div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 操作解析：</strong><ul><li>技術分析中最可靠的底部反轉形態之一。</li><li><strong>目標價計算：</strong> 突破點 + (頸線價格 - 頭部最低價)。</li></ul></div>
+                  <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>台股案例：</strong> 2454 聯發科於 2023 下半年完成頭肩底打底後，放量突破頸線開啟長波段上漲。</span></div>
+                </div>
+              </div>
+
+              <!-- Pattern 4: 三角收斂 -->
+              <div class="kline-card" data-type="bullish" data-title="三角收斂 Ascending Triangle 整理突破 變盤在即">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish"><i class="fa-solid fa-compress"></i> 壓縮變盤 ‧ 順勢突破</span>
+                  <span class="kline-number">04 / 05</span>
+                </div>
+                <h3 class="kline-card-title">上升三角收斂 <span class="en-name">Ascending Triangle</span></h3>
+                <div class="kline-svg-wrap">
+                  <svg viewBox="0 0 220 120" class="kline-svg">
+                    <line x1="30" y1="25" x2="190" y2="25" stroke="#eab308" stroke-width="2"/>
+                    <line x1="30" y1="95" x2="190" y2="25" stroke="#38bdf8" stroke-width="2"/>
+                    <path d="M 40 90 L 60 25 L 80 75 L 100 25 L 120 60 L 140 25 L 170 20" stroke="#ef4444" stroke-width="1.5" fill="none"/>
+                    <text x="120" y="18" fill="#eab308" font-size="8">高點水平壓力</text>
+                    <text x="50" y="105" fill="#38bdf8" font-size="8">低點墊高趨勢線</text>
+                  </svg>
+                </div>
+                <div class="kline-info-body">
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>高點受限於水平壓力線，但低點持續墊高。代表多方每次回檔買盤意願越來越強，壓縮至末端即將爆發。</p></div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 突破點：</strong><ul><li>收斂至末端 2/3 至 3/4 處最易爆發。</li><li>帶量收盤實體站上水平壓力線為最佳進場點。</li></ul></div>
+                  <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>台股案例：</strong> 台股中小型飆股在主升段發動前，常出現 2~3 週的三角收斂蓄勢。</span></div>
+                </div>
+              </div>
+
+              <!-- Pattern 5: 箱型突破 -->
+              <div class="kline-card" data-type="bullish" data-title="箱型突破 Box Pattern 橫盤整理 帶量攻擊 2382廣達">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish-strong"><i class="fa-solid fa-box"></i> 橫盤換手 ‧ 帶量突破</span>
+                  <span class="kline-number">05 / 05</span>
+                </div>
+                <h3 class="kline-card-title">箱型區間突破 <span class="en-name">Box Breakout</span></h3>
+                <div class="kline-svg-wrap">
+                  <svg viewBox="0 0 220 120" class="kline-svg">
+                    <rect x="30" y="40" width="130" height="55" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-dasharray="3,3" rx="3"/>
+                    <path d="M 20 90 L 40 45 L 70 85 L 100 45 L 130 85 L 155 42 L 195 15" stroke="#ef4444" stroke-width="2" fill="none"/>
+                    <text x="65" y="35" fill="#38bdf8" font-size="8">箱頂壓力</text>
+                    <text x="65" y="108" fill="#38bdf8" font-size="8">箱底支撐</text>
+                  </svg>
+                </div>
+                <div class="kline-info-body">
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>股價在區間箱頂與箱底之間反覆震盪洗盤。當主力完成籌碼收集後，以大長紅K帶量突破箱頂。</p></div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 操作策略：</strong><ul><li>箱內操作：箱底買、箱頂賣。</li><li><strong>突破操作：</strong> 帶量突破箱頂收盤站穩，順勢追價卡位主升段。</li></ul></div>
+                  <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>台股案例：</strong> 2382 廣達在 2023/04 突破長達半年的箱型整理區後，開啟股價暴漲行情。</span></div>
+                </div>
+              </div>
+
+            </div><!-- /knowledge-grid -->
+          </div><!-- /knowledge-section -->
         </div><!-- /panel-pattern -->
 
         <!-- ── Panel: Fundamental ──────────────────────────────────── -->
         <div class="knowledge-panel" id="panel-fundamental">
-          <div class="coming-soon-panel">
-            <div class="coming-soon-icon fundamental">
-              <i class="fa-solid fa-coins"></i>
+          <div class="knowledge-section">
+            <div class="knowledge-header-wrap">
+              <div>
+                <h2 class="section-title"><i class="fa-solid fa-coins"></i> 核心基本面指標指引 (Fundamental Metrics)</h2>
+                <p class="knowledge-subtitle">本益比 (P/E)、預估 EPS (TTM)、股東權益報酬率 (ROE)、殖利率與相對大盤強弱度全面解構</p>
+              </div>
             </div>
-            <div class="coming-soon-title">基本面分析指引 即將推出</div>
-            <div class="coming-soon-desc">
-              預計涵蓋 P/E、P/B、ROE、EPS 成長率、股息殖利率等核心指標解析，搭配台股產業特性說明與選股框架建立。
-            </div>
-            <div class="coming-soon-chips">
-              <span class="coming-soon-chip">P/E 本益比</span>
-              <span class="coming-soon-chip">P/B 股價淨值比</span>
-              <span class="coming-soon-chip">ROE 股東權益報酬率</span>
-              <span class="coming-soon-chip">EPS 成長率</span>
-              <span class="coming-soon-chip">股息殖利率</span>
-              <span class="coming-soon-chip">自由現金流</span>
-            </div>
-          </div>
+
+            <div class="knowledge-grid">
+
+              <!-- Fund 1: P/E -->
+              <div class="kline-card" data-type="bullish" data-title="P/E 本益比 Price to Earnings Ratio 評價估值">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish"><i class="fa-solid fa-calculator"></i> 評價估值 ‧ 核心指標</span>
+                  <span class="kline-number">01 / 05</span>
+                </div>
+                <h3 class="kline-card-title">本益比 (P/E Ratio) <span class="en-name">Price-to-Earnings</span></h3>
+                <div class="kline-info-body" style="margin-top:0.5rem;">
+                  <div class="info-block">
+                    <strong class="label"><i class="fa-solid fa-function"></i> 計算公式：</strong>
+                    <p style="background:var(--bg-2);padding:0.4rem 0.6rem;border-radius:4px;font-family:'Outfit',monospace;color:#93c5fd;">本益比 = 最新股價 ÷ 每年每股盈餘 (EPS)</p>
+                  </div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-lightbulb"></i> 應用技巧：</strong><ul><li>代表投資人為了賺取公司每 1 元獲利，所願意付出的代價（回收年限）。</li><li><strong>同業比較：</strong> 本益比需與「同產業競爭對手」或「歷史本益比河流圖」相比才有意義。</li></ul></div>
+                </div>
+              </div>
+
+              <!-- Fund 2: TTM EPS -->
+              <div class="kline-card" data-type="bullish" data-title="近四季累計 EPS TTM Trailing Twelve Months 財報動能">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish-strong"><i class="fa-solid fa-fire"></i> 滾動財報 ‧ 即時評價</span>
+                  <span class="kline-number">02 / 05</span>
+                </div>
+                <h3 class="kline-card-title">近 4 季累計 EPS (TTM) <span class="en-name">Trailing 12 Months</span></h3>
+                <div class="kline-info-body" style="margin-top:0.5rem;">
+                  <div class="info-block">
+                    <strong class="label"><i class="fa-solid fa-function"></i> 計算公式：</strong>
+                    <p style="background:var(--bg-2);padding:0.4rem 0.6rem;border-radius:4px;font-family:'Outfit',monospace;color:#93c5fd;">TTM EPS = 近 4 個已公告季度 EPS 之總和</p>
+                  </div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-lightbulb"></i> 應用技巧：</strong><ul><li>克服「前一年度舊 EPS 過時」與「單一季度淡旺季失真」的缺點。</li><li>本儀表板重點顯示「目前 EPS 倍數 (TTM)」，能最真實反映目前股價之評價水準。</li></ul></div>
+                </div>
+              </div>
+
+              <!-- Fund 3: ROE -->
+              <div class="kline-card" data-type="bullish" data-title="ROE 股東權益報酬率 Return on Equity 護城河 巴菲特指標">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish"><i class="fa-solid fa-gem"></i> 獲利能力 ‧ 護城河</span>
+                  <span class="kline-number">03 / 05</span>
+                </div>
+                <h3 class="kline-card-title">股東權益報酬率 (ROE) <span class="en-name">Return on Equity</span></h3>
+                <div class="kline-info-body" style="margin-top:0.5rem;">
+                  <div class="info-block">
+                    <strong class="label"><i class="fa-solid fa-function"></i> 計算公式：</strong>
+                    <p style="background:var(--bg-2);padding:0.4rem 0.6rem;border-radius:4px;font-family:'Outfit',monospace;color:#93c5fd;">ROE = (稅後淨利 ÷ 股東權益) × 100%</p>
+                  </div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-lightbulb"></i> 應用技巧：</strong><ul><li>巴菲特最看重的選股指標：長期 ROE 穩定維持在 <strong>15% 以上</strong> 的公司具備強大護城河。</li><li>需留意是否透過高槓桿（高負債）來美化 ROE。</li></ul></div>
+                </div>
+              </div>
+
+              <!-- Fund 4: Dividend Yield -->
+              <div class="kline-card" data-type="bullish" data-title="現金股息殖利率 Dividend Yield 高股息 填息">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish"><i class="fa-solid fa-vault"></i> 防守現金流 ‧ 填息能力</span>
+                  <span class="kline-number">04 / 05</span>
+                </div>
+                <h3 class="kline-card-title">現金股息殖利率 <span class="en-name">Dividend Yield</span></h3>
+                <div class="kline-info-body" style="margin-top:0.5rem;">
+                  <div class="info-block">
+                    <strong class="label"><i class="fa-solid fa-function"></i> 計算公式：</strong>
+                    <p style="background:var(--bg-2);padding:0.4rem 0.6rem;border-radius:4px;font-family:'Outfit',monospace;color:#93c5fd;">殖利率 = (每股現金股利 ÷ 當前股價) × 100%</p>
+                  </div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-lightbulb"></i> 應用技巧：</strong><ul><li>台股平均殖利率約 4%~4.5%，高於 5% 視為優質高殖利率股。</li><li><strong> key：</strong> 需確認公司是否具備「填息能力」（EPS 成長），避免賺了股息領了價差。</li></ul></div>
+                </div>
+              </div>
+
+              <!-- Fund 5: RS 5D -->
+              <div class="kline-card" data-type="bullish" data-title="相對大盤強弱度 5D RS Relative Strength 領頭羊 超額報酬">
+                <div class="kline-card-header">
+                  <span class="kline-badge bullish-strong"><i class="fa-solid fa-bolt"></i> 領頭羊選股 ‧ 波段超額</span>
+                  <span class="kline-number">05 / 05</span>
+                </div>
+                <h3 class="kline-card-title">相對大盤強弱 (5D RS) <span class="en-name">Relative Strength</span></h3>
+                <div class="kline-info-body" style="margin-top:0.5rem;">
+                  <div class="info-block">
+                    <strong class="label"><i class="fa-solid fa-function"></i> 計算公式：</strong>
+                    <p style="background:var(--bg-2);padding:0.4rem 0.6rem;border-radius:4px;font-family:'Outfit',monospace;color:#93c5fd;">RS (5D) = 個股近5日漲跌幅 - 加權指數近5日漲跌幅</p>
+                  </div>
+                  <div class="info-block"><strong class="label"><i class="fa-solid fa-lightbulb"></i> 應用技巧：</strong><ul><li><strong>🔥 強勢股 (RS > +1.5%)：</strong> 當大盤回檔時逆勢抗跌或大漲，為主力資金率先關照的波段領頭羊。</li><li>本儀表板內建 RS(5D) 排序，可一鍵找出全市場近一週最強勢的主力主流股。</li></ul></div>
+                </div>
+              </div>
+
+            </div><!-- /knowledge-grid -->
+          </div><!-- /knowledge-section -->
         </div><!-- /panel-fundamental -->
 
       </div><!-- /content-scroll -->
