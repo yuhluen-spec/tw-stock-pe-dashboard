@@ -131,6 +131,37 @@ let stockList = [];
 let activeCategory = 'ALL';
 let deferredPwaPrompt = null;
 let currentModalFetchedStock = null;
+/* ─── Custom Order Persistence (4th place onward) ───────────────── */
+const CUSTOM_ORDER_KEY = 'tw_pe_custom_order_v1';
+function loadCustomOrder() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_ORDER_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+function saveCustomOrder(codeArray) {
+  /* 1. Always persist locally for immediate use */
+  try {
+    localStorage.setItem(CUSTOM_ORDER_KEY, JSON.stringify(codeArray));
+  } catch {}
+  /* 2. Push to cloud in background (fire-and-forget) */
+  fetch('/api/order/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order: codeArray })
+  }).catch(() => {}); // silent fail — local order is still usable
+}
+async function fetchAndApplyCloudOrder() {
+  try {
+    const res = await fetch('/api/order/get');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.status === 'ok' && Array.isArray(data.order) && data.order.length > 0) {
+      /* Update local cache with cloud version */
+      localStorage.setItem(CUSTOM_ORDER_KEY, JSON.stringify(data.order));
+    }
+  } catch {}
+}
 /* ─── Custom User Stocks Persistence ──────────────────────────────── */
 const CUSTOM_STOCKS_KEY = 'tw_pe_custom_user_stocks';
 function loadCustomStocks() {
@@ -320,30 +351,43 @@ function getFiltered() {
   const top3Set = new Set(top3.map(s => s.code));
   let rest = list.filter(s => !top3Set.has(s.code));
 
-  /* ── Sort the remaining stocks by user-selected sort ── */
-  const sortFn = (a, b) => {
-    const estA = calcEstPE(a.price, a.eps2026q1, a.eps2026q2);
-    const estB = calcEstPE(b.price, b.eps2026q1, b.eps2026q2);
-    const knA  = calcKnownPE(a.price, a.eps2025);
-    const knB  = calcKnownPE(b.price, b.eps2025);
-    const cmA  = calcCurrentMultiple(a.price, a.epsTTM);
-    const cmB  = calcCurrentMultiple(b.price, b.epsTTM);
-    const nn   = (v) => v == null ? Infinity : v;
-    switch (sort) {
-      case 'estPeAsc':          return nn(estA) - nn(estB);
-      case 'estPeDesc':         return nn(estB) - nn(estA);
-      case 'currentMultipleAsc':return nn(cmA)  - nn(cmB);
-      case 'knownPeAsc':        return nn(knA)  - nn(knB);
-      case 'priceDesc':         return b.price - a.price;
-      case 'ma20StreakDesc':
-        return ((b.ma20Dir === 'up' ? 1 : -1) * (b.ma20Streak || 0)) - ((a.ma20Dir === 'up' ? 1 : -1) * (a.ma20Streak || 0));
-      case 'ma60StreakDesc':
-        return ((b.ma60Dir === 'up' ? 1 : -1) * (b.ma60Streak || 0)) - ((a.ma60Dir === 'up' ? 1 : -1) * (a.ma60Streak || 0));
-      case 'codeAsc':           return a.code.localeCompare(b.code);
-      default:                  return 0;
+  /* ── Sort the remaining stocks ── */
+  if (sort === 'default') {
+    /* Apply custom user-defined order when sort is default */
+    const customOrder = loadCustomOrder();
+    if (customOrder.length > 0) {
+      const orderMap = new Map(customOrder.map((code, idx) => [code, idx]));
+      rest.sort((a, b) => {
+        const ia = orderMap.has(a.code) ? orderMap.get(a.code) : Infinity;
+        const ib = orderMap.has(b.code) ? orderMap.get(b.code) : Infinity;
+        return ia - ib;
+      });
     }
-  };
-  rest.sort(sortFn);
+  } else {
+    const sortFn = (a, b) => {
+      const estA = calcEstPE(a.price, a.eps2026q1, a.eps2026q2);
+      const estB = calcEstPE(b.price, b.eps2026q1, b.eps2026q2);
+      const knA  = calcKnownPE(a.price, a.eps2025);
+      const knB  = calcKnownPE(b.price, b.eps2025);
+      const cmA  = calcCurrentMultiple(a.price, a.epsTTM);
+      const cmB  = calcCurrentMultiple(b.price, b.epsTTM);
+      const nn   = (v) => v == null ? Infinity : v;
+      switch (sort) {
+        case 'estPeAsc':          return nn(estA) - nn(estB);
+        case 'estPeDesc':         return nn(estB) - nn(estA);
+        case 'currentMultipleAsc':return nn(cmA)  - nn(cmB);
+        case 'knownPeAsc':        return nn(knA)  - nn(knB);
+        case 'priceDesc':         return b.price - a.price;
+        case 'ma20StreakDesc':
+          return ((b.ma20Dir === 'up' ? 1 : -1) * (b.ma20Streak || 0)) - ((a.ma20Dir === 'up' ? 1 : -1) * (a.ma20Streak || 0));
+        case 'ma60StreakDesc':
+          return ((b.ma60Dir === 'up' ? 1 : -1) * (b.ma60Streak || 0)) - ((a.ma60Dir === 'up' ? 1 : -1) * (a.ma60Streak || 0));
+        case 'codeAsc':           return a.code.localeCompare(b.code);
+        default:                  return 0;
+      }
+    };
+    rest.sort(sortFn);
+  }
 
   return [...top3, ...rest];
 }
@@ -382,6 +426,21 @@ function renderTable() {
       ? `<span class="price-leader-badge ${medal.badgeCls}">${medal.label}</span>`
       : '';
 
+    const sortSelect2 = document.getElementById('sortBySelect');
+    const currentSort = sortSelect2 ? sortSelect2.value : 'default';
+    const showMoveBtn = !medal && currentSort === 'default';
+    // restIdx = 在「非前三名」子清單中的位置 (0 = 第一個可移動行)
+    const top3Count = Math.min(3, list.filter((_, i) => i < 3 && list[i]).length);
+    const restIdx = idx - top3Count;
+    const nonTop3Count = list.length - top3Count;
+    const moveUpDisabled = (restIdx === 0) ? 'disabled' : '';
+    const moveDownDisabled = (restIdx === nonTop3Count - 1) ? 'disabled' : '';
+    const moveBtns = showMoveBtn ? `
+      <button class="act-btn move-btn" onclick="moveStock('${s.code}','up')" title="往上移一格" ${moveUpDisabled}><i class="fa-solid fa-chevron-up"></i></button>
+      <button class="act-btn move-btn" onclick="moveStock('${s.code}','down')" title="往下移一格" ${moveDownDisabled}><i class="fa-solid fa-chevron-down"></i></button>
+    ` : '';
+
+
     return `
       <tr class="${trCls}">
         <td class="sticky-col col-idx">${idxCell}</td>
@@ -406,6 +465,7 @@ function renderTable() {
         <td>${pePeHtml(estPE)}</td>
         <td>
           <div class="act-wrap">
+            ${moveBtns}
             <button class="act-btn" onclick="editStock('${s.id}')" title="編輯"><i class="fa-solid fa-pen"></i></button>
             <button class="act-btn del" onclick="deleteStock('${s.id}')" title="刪除"><i class="fa-solid fa-trash"></i></button>
           </div>
@@ -816,6 +876,43 @@ window.deleteStock = async (id) => {
       showToast('刪除失敗，請檢查網路連線');
     }
   }
+};
+/* ─── Move Stock (custom order for 4th place onward) ────────────── */
+window.moveStock = (code, direction) => {
+  /* Build the current rest-list order (excluding top-3) */
+  const sortSelect = document.getElementById('sortBySelect');
+  if (sortSelect && sortSelect.value !== 'default') return; // only in default mode
+
+  const top3 = [...stockList].sort((a, b) => (b.price || 0) - (a.price || 0)).slice(0, 3);
+  const top3Set = new Set(top3.map(s => s.code));
+  let rest = stockList.filter(s => !top3Set.has(s.code));
+
+  /* Apply existing custom order first */
+  const customOrder = loadCustomOrder();
+  if (customOrder.length > 0) {
+    const orderMap = new Map(customOrder.map((c, i) => [c, i]));
+    rest.sort((a, b) => {
+      const ia = orderMap.has(a.code) ? orderMap.get(a.code) : Infinity;
+      const ib = orderMap.has(b.code) ? orderMap.get(b.code) : Infinity;
+      return ia - ib;
+    });
+  }
+
+  /* Ensure all rest codes are in the order array */
+  const restCodes = rest.map(s => s.code);
+  const idx = restCodes.indexOf(code);
+  if (idx === -1) return;
+
+  if (direction === 'up' && idx > 0) {
+    [restCodes[idx - 1], restCodes[idx]] = [restCodes[idx], restCodes[idx - 1]];
+  } else if (direction === 'down' && idx < restCodes.length - 1) {
+    [restCodes[idx], restCodes[idx + 1]] = [restCodes[idx + 1], restCodes[idx]];
+  } else {
+    return; // already at boundary
+  }
+
+  saveCustomOrder(restCodes);
+  renderTable();
 };
 /* ─── Fetch and Render Market Indices ───────────────────────────── */
 let indicesData = [];
@@ -1721,11 +1818,13 @@ async function handleLogout() {
   }
 }
 
-function initDashboardData() {
+async function initDashboardData() {
   const datePicker = document.getElementById('datePicker');
   const latestDate = getLatestTradingDate();
   if (datePicker && !datePicker.value) datePicker.value = latestDate;
   const currentVal = datePicker ? datePicker.value : latestDate;
+  /* Fetch cloud order first so the table renders in the right order */
+  await fetchAndApplyCloudOrder();
   fetchStockData(currentVal);
   fetchIndicesData();
   fetchUsStockData();

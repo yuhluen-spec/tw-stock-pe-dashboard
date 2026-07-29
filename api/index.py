@@ -1077,9 +1077,55 @@ def delete_stock_api():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ─── Custom Stock Order (Cloud Sync) ─────────────────────────────────────────
+
+@app.route('/api/order/get', methods=['GET'])
+def get_order():
+    if 'user_email' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    gas_url = os.environ.get('GAS_API_URL')
+    gas_key = os.environ.get('GAS_SECRET_KEY')
+    if not gas_url or not gas_key:
+        return jsonify({'status': 'ok', 'order': []})
+    try:
+        url = f"{gas_url}?key={urllib.parse.quote(gas_key)}&action=get_order"
+        res = call_gas_api(url)
+        if res.get('status') == 'ok':
+            return jsonify({'status': 'ok', 'order': res.get('order', [])})
+        return jsonify({'status': 'ok', 'order': []})
+    except Exception as e:
+        print(f"Error fetching order from sheet: {e}")
+        return jsonify({'status': 'ok', 'order': []})
+
+
+@app.route('/api/order/save', methods=['POST'])
+def save_order():
+    if 'user_email' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    gas_url = os.environ.get('GAS_API_URL')
+    gas_key = os.environ.get('GAS_SECRET_KEY')
+    if not gas_url or not gas_key:
+        return jsonify({'status': 'error', 'message': 'Google Sheets backend not configured'}), 500
+    req_data = request.get_json() or {}
+    order = req_data.get('order', [])
+    if not isinstance(order, list):
+        return jsonify({'status': 'error', 'message': 'order must be a list'}), 400
+    payload = {
+        'key': gas_key,
+        'action': 'save_order',
+        'order': order
+    }
+    try:
+        res = call_gas_api_write(gas_url, payload)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 # ─── Global Macro Commodities, Freight & Crypto ──────────────────────────────
 
 MACRO_ASSETS_CONFIG = [
+
     {'code': 'BZ=F',    'name': '布蘭特原油期貨',       'category': '能源期貨',  'unit': 'USD/桶'},
     {'code': 'GC=F',    'name': '黃金期貨',            'category': '貴金屬',    'unit': 'USD/盎司'},
     {'code': 'SI=F',    'name': '白銀期貨',            'category': '貴金屬',    'unit': 'USD/盎司'},
