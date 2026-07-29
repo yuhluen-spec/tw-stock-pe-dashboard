@@ -1366,3 +1366,63 @@ input[type="date"]#datePicker:focus { border-color: var(--blue); }
   .kpi-strip { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
   .search-wrap input { width: 130px; }
 }
+
+/* ─── Relative Strength Column & Badge Styles ───────────────────────── */
+.col-rs {
+  min-width: 120px;
+  text-align: center;
+}
+
+.rs-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.rs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.rs-badge-strong {
+  background: rgba(34, 197, 94, 0.16);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.15);
+}
+
+.rs-badge-weak {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.15);
+}
+
+.rs-badge-neutral {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.rs-diff {
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: var(--font);
+}
+
+.rs-diff.rs-pos {
+  color: #4ade80;
+}
+
+.rs-diff.rs-neg {
+  color: #f87171;
+}
+

@@ -103,6 +103,28 @@ def derive_eps_from_finmind(stock_id, ctx):
             'epsTTM': ref.get('epsTTM')
         }
 
+def fetch_taiex_performance(target_date_str, ctx):
+    try:
+        t_date = datetime.datetime.strptime(target_date_str, '%Y-%m-%d')
+        start_date = (t_date - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+        url = f"https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=TAIEX&start_date={start_date}&end_date={target_date_str}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, context=ctx, timeout=4) as res:
+            data = json.loads(res.read().decode('utf-8')).get('data', [])
+            if not data:
+                return 0.0
+            data = sorted([x for x in data if x.get('date', '') <= target_date_str and x.get('close') is not None], key=lambda x: x['date'])
+            prices = [float(x['close']) for x in data]
+            if len(prices) >= 6:
+                change_5d = ((prices[-1] - prices[-6]) / prices[-6]) * 100.0
+            elif len(prices) >= 2:
+                change_5d = ((prices[-1] - prices[0]) / prices[0]) * 100.0
+            else:
+                change_5d = 0.0
+            return round(change_5d, 2)
+    except Exception:
+        return 0.0
+
 def fetch_ma_data(stock_id, target_date_str, ctx):
     try:
         t_date = datetime.datetime.strptime(target_date_str, '%Y-%m-%d')
@@ -118,6 +140,13 @@ def fetch_ma_data(stock_id, target_date_str, ctx):
             highs = [float(x.get('max', x['close'])) for x in data]
             lows = [float(x.get('min', x['close'])) for x in data]
             k_val, d_val = calc_kd_info(highs, lows, prices)
+
+            if len(prices) >= 6:
+                stock_5d_pct = round(((prices[-1] - prices[-6]) / prices[-6]) * 100.0, 2)
+            elif len(prices) >= 2:
+                stock_5d_pct = round(((prices[-1] - prices[0]) / prices[0]) * 100.0, 2)
+            else:
+                stock_5d_pct = 0.0
 
             def calc_ma(period):
                 if len(prices) < period:
@@ -155,10 +184,12 @@ def fetch_ma_data(stock_id, target_date_str, ctx):
             return stock_id, {
                 'ma20': ma20, 'ma20Dir': dir20, 'ma20Streak': streak20,
                 'ma60': ma60, 'ma60Dir': dir60, 'ma60Streak': streak60,
-                'kVal': k_val, 'dVal': d_val
+                'kVal': k_val, 'dVal': d_val,
+                'stock5dPct': stock_5d_pct
             }
     except Exception:
         return stock_id, {}
+
 
 def fetch_twse_prices(date_yyyymmdd, ctx):
     prices = {}
@@ -496,18 +527,25 @@ def get_stocks():
             # DEFAULT: Return core default tracked stocks + any user custom stocks!
             target_codes = list(dict.fromkeys(DEFAULT_CORE_CODES + custom_codes))
 
-    # Parallel EPS & MA derivation for target stocks
+    # Parallel EPS, MA & TAIEX derivation for target stocks
     eps_results = {}
     ma_results = {}
-    with ThreadPoolExecutor(max_workers=15) as executor:
+    taiex_5d_pct = 0.0
+    with ThreadPoolExecutor(max_workers=16) as executor:
         eps_futures = [executor.submit(derive_eps_from_finmind, c, ctx) for c in target_codes]
         ma_futures = [executor.submit(fetch_ma_data, c, date_param, ctx) for c in target_codes]
+        taiex_future = executor.submit(fetch_taiex_performance, date_param, ctx)
+        
         for f in eps_futures:
             code, eps_dict = f.result()
             eps_results[code] = eps_dict
         for f in ma_futures:
             code, ma_dict = f.result()
             ma_results[code] = ma_dict
+        try:
+            taiex_5d_pct = taiex_future.result()
+        except Exception:
+            taiex_5d_pct = 0.0
 
     result_stocks = []
     for code in target_codes:
@@ -541,6 +579,18 @@ def get_stocks():
             
         ma_info = ma_results.get(code, {})
 
+        stock_5d_pct = ma_info.get('stock5dPct', 0.0)
+        excess_5d = round(stock_5d_pct - taiex_5d_pct, 2)
+        if excess_5d > 1.5:
+            rs_status = 'strong'
+            rs_label = '🔥 強勢'
+        elif excess_5d < -1.5:
+            rs_status = 'weak'
+            rs_label = '❄️ 弱勢'
+        else:
+            rs_status = 'neutral'
+            rs_label = '⚪ 一致'
+
         result_stocks.append({
             'id': code,
             'category': category,
@@ -558,7 +608,12 @@ def get_stocks():
             'ma60Dir': ma_info.get('ma60Dir'),
             'ma60Streak': ma_info.get('ma60Streak', 0),
             'kVal': ma_info.get('kVal'),
-            'dVal': ma_info.get('dVal')
+            'dVal': ma_info.get('dVal'),
+            'stock5dPct': stock_5d_pct,
+            'taiex5dPct': taiex_5d_pct,
+            'rs5dDiff': excess_5d,
+            'rs5dStatus': rs_status,
+            'rs5dLabel': rs_label
         })
 
     SERVER_CACHE[cache_key] = {

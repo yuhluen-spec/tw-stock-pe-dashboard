@@ -334,6 +334,26 @@ function renderTabs() {
     });
   });
 }
+/* ─── Relative Strength helper ─────────────────────────────────── */
+function rsHtml(status, label, diff, stock5d, taiex5d) {
+  if (diff == null) return '<span class="val-muted">--</span>';
+  let badgeCls = 'rs-badge-neutral';
+  if (status === 'strong') {
+    badgeCls = 'rs-badge-strong';
+  } else if (status === 'weak') {
+    badgeCls = 'rs-badge-weak';
+  }
+  const sign = diff > 0 ? '+' : '';
+  const s5dStr = stock5d != null ? (stock5d > 0 ? '+' + stock5d + '%' : stock5d + '%') : '--';
+  const t5dStr = taiex5d != null ? (taiex5d > 0 ? '+' + taiex5d + '%' : taiex5d + '%') : '--';
+  const title = `個股5日: ${s5dStr} | 大盤5日: ${t5dStr} | 超額: ${sign}${diff}%`;
+  
+  return `<div class="rs-wrap" title="${title}">
+    <span class="rs-badge ${badgeCls}">${label || '⚪ 一致'}</span>
+    <span class="rs-diff ${diff > 0 ? 'rs-pos' : (diff < 0 ? 'rs-neg' : '')}">${sign}${diff.toFixed(1)}%</span>
+  </div>`;
+}
+
 /* ─── Get filtered + sorted list ────────────────────────────────── */
 function getFiltered() {
   const qInput = document.getElementById('searchInput');
@@ -377,6 +397,7 @@ function getFiltered() {
         case 'estPeDesc':         return nn(estB) - nn(estA);
         case 'currentMultipleAsc':return nn(cmA)  - nn(cmB);
         case 'knownPeAsc':        return nn(knA)  - nn(knB);
+        case 'rs5dDesc':          return (b.rs5dDiff || 0) - (a.rs5dDiff || 0);
         case 'priceDesc':         return b.price - a.price;
         case 'ma20StreakDesc':
           return ((b.ma20Dir === 'up' ? 1 : -1) * (b.ma20Streak || 0)) - ((a.ma20Dir === 'up' ? 1 : -1) * (a.ma20Streak || 0));
@@ -457,6 +478,7 @@ function renderTable() {
         <td>${epsHtml(s.eps2026q2)}</td>
         <td class="highlighted-td"><span class="val-num val-ttm">${fmtNum(s.epsTTM)}</span></td>
         <td><span class="val-num">${fmtNum(s.price)}</span></td>
+        <td class="highlighted-td">${rsHtml(s.rs5dStatus, s.rs5dLabel, s.rs5dDiff, s.stock5dPct, s.taiex5dPct)}</td>
         <td>${maStatusHtml(s.ma20, s.ma20Dir, s.ma20Streak, s.price, '月線')}</td>
         <td>${maStatusHtml(s.ma60, s.ma60Dir, s.ma60Streak, s.price, '季線')}</td>
         <td>${kdHtml(s.kVal, s.dVal)}</td>
