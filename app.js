@@ -1482,10 +1482,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("indices")?.scrollIntoView({ behavior: "smooth" });
     fetchIndicesData();
   });
+  document.getElementById("navLinkKnowledge")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("knowledge-kline")?.scrollIntoView({ behavior: "smooth" });
+  });
   initScrollShadow();
   setupModalStockAutocomplete();
   document.getElementById('btnLoadDateData')?.addEventListener('click', (e) => {
-    const val = datePicker ? datePicker.value : latestDate;
+    const dp = document.getElementById('datePicker');
+    const val = dp ? dp.value : getLatestTradingDate();
     fetchStockData(val, e.shiftKey);
   });
   document.getElementById('btnDateToday')?.addEventListener('click', () => {
@@ -1941,3 +1946,41 @@ async function syncLocalStocksToCloud() {
   fetchUsStockData(true);
 }
 window.syncLocalStocksToCloud = syncLocalStocksToCloud;
+
+/* ─── K-Line Knowledge: Search & Filter Events ────────────────────── */
+function initKnowledgeKlineEvents() {
+  const filterBtns = document.querySelectorAll('.kline-filter-btn');
+  const klineCards = document.querySelectorAll('.kline-card');
+  const searchInput = document.getElementById('klineSearchInput');
+  if (!filterBtns.length || !klineCards.length) return;
+
+  function filterCards() {
+    const activeBtn = document.querySelector('.kline-filter-btn.active');
+    const filterType = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    klineCards.forEach(card => {
+      const cardType = card.getAttribute('data-type');
+      const cardTitle = (card.getAttribute('data-title') || '') + ' ' + card.innerText;
+      const matchesType = (filterType === 'all' || cardType === filterType);
+      const matchesSearch = (!query || cardTitle.toLowerCase().includes(query));
+      card.style.display = (matchesType && matchesSearch) ? 'flex' : 'none';
+    });
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterCards();
+    });
+  });
+
+  if (searchInput) searchInput.addEventListener('input', filterCards);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initKnowledgeKlineEvents);
+} else {
+  initKnowledgeKlineEvents();
+}
+
