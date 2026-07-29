@@ -1478,13 +1478,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnSyncTop')?.addEventListener('click', syncLocalStocksToCloud);
   document.getElementById("btnRefreshIndices")?.addEventListener("click", () => fetchIndicesData(true));
   document.getElementById("navLinkIndices")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    document.getElementById("indices")?.scrollIntoView({ behavior: "smooth" });
-    fetchIndicesData();
-  });
-  document.getElementById("navLinkKnowledge")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    document.getElementById("knowledge-kline")?.scrollIntoView({ behavior: "smooth" });
+    const target = document.getElementById("indices");
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: "smooth" });
+      fetchIndicesData();
+    }
   });
   initScrollShadow();
   setupModalStockAutocomplete();
@@ -1590,14 +1589,20 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchMacroAssetsData();
   document.getElementById('btnRefreshMacroAssets')?.addEventListener('click', () => fetchMacroAssetsData(true));
   document.getElementById('navLinkMacro')?.addEventListener('click', e => {
-    e.preventDefault();
-    document.getElementById('macro-commodities')?.scrollIntoView({ behavior: 'smooth' });
+    const target = document.getElementById('macro-commodities');
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
   });
   document.getElementById('btnRefreshUsStocks')?.addEventListener('click', () => fetchUsStockData(true));
   document.getElementById('btnAddUsStock')?.addEventListener('click', () => openUsModal());
   document.getElementById('navLinkUsStocks')?.addEventListener('click', e => {
-    e.preventDefault();
-    document.getElementById('us-stocks')?.scrollIntoView({ behavior: 'smooth' });
+    const target = document.getElementById('us-stocks');
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
   });
   document.getElementById('btnCloseUsModal')?.addEventListener('click', closeUsModal);
   document.getElementById('btnCancelUsModal')?.addEventListener('click', closeUsModal);

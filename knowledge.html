@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>台股本益比分析儀表板</title>
+
+  <!-- SEO -->
+  <meta name="description" content="即時台股本益比、預估本益比、近4季TTM EPS與目前EPS倍數分析儀表板，支援PWA離線使用">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#080f1e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="台股本益比">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Google Sign-In -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+  <!-- PWA Install Banner -->
+  <div class="pwa-banner" id="pwaInstallBanner">
+    <div class="pwa-banner-inner">
+      <div class="pwa-icon"><i class="fa-solid fa-chart-line"></i></div>
+      <div class="pwa-info">
+        <strong>安裝台股本益比 APP</strong>
+        <span>加入主畫面，離線也能快速開啟</span>
+      </div>
+      <button class="pwa-btn-install" id="btnInstallPwa">安裝</button>
+      <button class="pwa-btn-close" id="btnDismissPwa"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- ── Sidebar (Desktop/Tablet) ───────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">
+          <i class="fa-solid fa-arrow-trend-up"></i>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">台股本益比</span>
+          <span class="logo-sub">PE Dashboard</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-link" id="navLinkIndices" href="index.html#indices">
+          <i class="fa-solid fa-chart-area"></i>
+          <span>大盤指數</span>
+        </a>
+        <a class="nav-link" id="navLinkStocks" href="index.html#stocks">
+          <i class="fa-solid fa-table-list"></i>
+          <span>個股列表</span>
+        </a>
+        <a class="nav-link" id="navLinkMacro" href="index.html#macro-commodities">
+          <i class="fa-solid fa-earth-americas"></i>
+          <span>焦點商品與運價</span>
+        </a>
+        <a class="nav-link" id="navLinkUsStocks" href="index.html#us-stocks">
+          <i class="fa-solid fa-globe"></i>
+          <span>美股個股</span>
+        </a>
+        <a class="nav-link active" id="navLinkKnowledge" href="#knowledge-kline">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>K線組合知識</span>
+        </a>
+        <a class="nav-link" id="navLinkFormula" href="index.html#formula">
+          <i class="fa-solid fa-function"></i>
+          <span>計算說明</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-actions">
+        <button class="sidebar-btn primary" id="sidebarBtnAdd">
+          <i class="fa-solid fa-plus"></i> 新增個股
+        </button>
+        <button class="sidebar-btn update-sidebar-btn" id="sidebarBtnUpdateAll" onclick="forceUpdateAllStocks()">
+          <i class="fa-solid fa-rotate"></i> 更新個股最新價格
+        </button>
+        <button class="sidebar-btn" id="sidebarBtnExport">
+          <i class="fa-solid fa-file-arrow-down"></i> 匯出 CSV
+        </button>
+        <button class="sidebar-btn" id="sidebarBtnSync" style="background:rgba(14,165,233,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.25);">
+          <i class="fa-solid fa-cloud-arrow-up"></i> 同步本地個股至雲端
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator" style="margin-bottom: 0.5rem;">
+          <span class="status-dot"></span>
+          <span id="sidebarStatusText">資料載入中…</span>
+        </div>
+        <div class="user-profile" id="userProfileSection" style="display:none; align-items:center; gap:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border);">
+          <img id="userAvatar" src="" alt="User Avatar" style="width:28px; height:28px; border-radius:50%; object-fit:cover; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="flex-grow:1; min-width:0;">
+            <div id="userName" style="font-size:0.75rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">User</div>
+            <div id="userEmail" style="font-size:0.62rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">user@gmail.com</div>
+          </div>
+          <button id="btnLogout" class="icon-btn" title="登出" style="padding:0.25rem; font-size:0.75rem; opacity:0.7; cursor:pointer; background:none; border:none; color:var(--text-muted);"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main Area ───────────────────────────────────────────────── -->
+    <div class="main-area">
+
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button class="hamburger" id="hamburgerBtn" aria-label="選單">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="topbar-title">
+          <h1>台股本益比分析</h1>
+          <span class="topbar-sub">即時本益比 ‧ EPS倍數 ‧ 財報推算</span>
+        </div>
+        <div class="topbar-controls">
+          <button class="icon-btn" id="btnSyncTop" title="同步本地個股至雲端" style="color:#38bdf8;">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </button>
+          <button class="icon-btn" id="btnAddStockTop" title="新增個股">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+          <button class="icon-btn" id="btnExportTop" title="匯出 CSV">
+            <i class="fa-solid fa-file-arrow-down"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-scroll">
+
+        
+
+        
+
+        
+
+        
+
+        
+
+      </div><!-- /content-scroll -->
+    </div><!-- /main-area -->
+  </div><!-- /layout -->
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bnav-item active" id="navHome">
+      <i class="fa-solid fa-house"></i>
+      <span>首頁</span>
+    </button>
+    <button class="bnav-item" id="navDate">
+      <i class="fa-regular fa-calendar-days"></i>
+      <span>日期</span>
+    </button>
+    <button class="bnav-item bnav-fab" id="navAdd">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+    <button class="bnav-item" id="navExportMobile">
+      <i class="fa-solid fa-file-arrow-down"></i>
+      <span>匯出</span>
+    </button>
+    <button class="bnav-item" id="navInfo">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>說明</span>
+    </button>
+  </nav>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-backdrop" id="stockModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
+          <h3 id="modalTitle">搜尋並新增股票</h3>
+        </div>
+        <button class="modal-close" id="btnCloseModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Smart Autocomplete Search Box -->
+      <div class="modal-search-section">
+        <label for="modalStockSearch" class="search-label">
+          <i class="fa-solid fa-magnifying-glass"></i> 輸入股票代號或名稱（自動帶出前 7 筆）：
+        </label>
+        <div class="modal-search-wrap">
+          <input type="text" id="modalStockSearch" placeholder="例：2317、鴻海、聯發科、2383、3665..." autocomplete="off">
+          <i class="fa-solid fa-spinner fa-spin search-spinner" id="modalSearchSpinner" style="display:none"></i>
+        </div>
+
+        <button type="button" class="query-btn update-all-btn" id="btnSearchLiveStock" onclick="fetchLiveStockInModal()" style="margin-top:0.6rem;width:100%;justify-content:center;padding:0.5rem;font-size:0.82rem;">
+          <i class="fa-solid fa-bolt"></i> <span>線上即時連線抓取股票資料 (證交所/櫃買中心)</span>
+        </button>
+
+        <!-- Dynamic Suggestions Box (Top 7 Matches) -->
+        <div class="suggestions-box" id="suggestionsBox" style="display:none">
+          <div class="suggestions-header">匹配熱門個股 (點擊即可自動帶入所有資料)：</div>
+          <div class="suggestions-list" id="suggestionsList">
+            <!-- Dynamic 7 suggestion items -->
+          </div>
+        </div>
+      </div>
+
+      <form id="stockForm">
+        <input type="hidden" id="editStockId">
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="inputCategory">產業類別</label>
+            <input type="text" id="inputCategory" placeholder="自動帶入產業" required>
+          </div>
+          <div class="form-field">
+            <label for="inputCode">股票代號</label>
+            <input type="text" id="inputCode" placeholder="自動帶入代號" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="inputName">股票名稱</label>
+          <input type="text" id="inputName" placeholder="自動帶入名稱" required>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-field">
+            <label for="inputEps2025">2025全年EPS</label>
+            <input type="number" step="0.01" id="inputEps2025" placeholder="自動算">
+          </div>
+          <div class="form-field">
+            <label for="inputEps2026Q1">2026 Q1 EPS</label>
+            <input type="number" step="0.01" id="inputEps2026Q1" placeholder="自動算">
+          </div>
+          <div class="form-field">
+            <label for="inputEps2026Q2">2026 Q2累計EPS</label>
+            <input type="number" step="0.01" id="inputEps2026Q2" placeholder="自動算">
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="inputPrice">最新收盤價（元）</label>
+          <input type="number" step="0.1" id="inputPrice" placeholder="自動帶出價格" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn ghost" id="btnCancelModal">取消</button>
+          <button type="submit" class="btn primary" id="btnSubmitStock">
+            <i class="fa-solid fa-plus"></i> 一鍵新增個股
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add US Stock Modal -->
+  <div class="modal-backdrop" id="usStockModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon" style="background:rgba(168,85,247,0.15);color:#a855f7;">
+            <i class="fa-solid fa-globe"></i>
+          </div>
+          <h3 id="usModalTitle">新增美股</h3>
+        </div>
+        <button class="modal-close" id="btnCloseUsModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Autocomplete Search -->
+      <div class="modal-search-section">
+        <label for="usModalSearch" class="search-label" style="color:#c084fc;">
+          <i class="fa-solid fa-magnifying-glass"></i> 輸入美股代號（自動帶出前 7 筆）：
+        </label>
+        <div class="modal-search-wrap">
+          <input type="text" id="usModalSearch" placeholder="例：NVDA、AAPL、GOOGL、TSLA、MSFT…" autocomplete="off">
+          <i class="fa-solid fa-spinner fa-spin search-spinner" id="usModalSpinner" style="display:none"></i>
+        </div>
+        <button type="button" id="btnFetchUsStock"
+          class="query-btn"
+          onclick="fetchLiveUsStockInModal()"
+          style="margin-top:0.6rem;width:100%;justify-content:center;padding:0.5rem;font-size:0.82rem;background:linear-gradient(135deg,#7c3aed,#a855f7);">
+          <i class="fa-solid fa-bolt"></i> <span>即時抓取 Yahoo Finance 最新資料</span>
+        </button>
+        <div class="suggestions-box" id="usSuggestionsBox" style="display:none">
+          <div class="suggestions-header">匹配美股（點擊即可帶入）：</div>
+          <div class="suggestions-list" id="usSuggestionsList"></div>
+        </div>
+      </div>
+
+      <form id="usStockForm">
+        <input type="hidden" id="usEditStockId">
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="usInputCode">股票代號</label>
+            <input type="text" id="usInputCode" placeholder="自動帶入" required style="text-transform:uppercase;">
+          </div>
+          <div class="form-field">
+            <label for="usInputSector">板塊</label>
+            <input type="text" id="usInputSector" placeholder="自動帶入" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="usInputName">公司名稱</label>
+          <input type="text" id="usInputName" placeholder="自動帶入" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn ghost" id="btnCancelUsModal">取消</button>
+          <button type="submit" class="btn primary" id="btnSubmitUsStock"
+            style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+            <i class="fa-solid fa-plus"></i> 新增美股
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── K-Line Technical Knowledge Section ─────────────────────── -->
+  <section class="knowledge-section" id="knowledge-kline">
+    <div class="knowledge-header-wrap">
+      <div>
+        <h2 class="section-title"><i class="fa-solid fa-graduation-cap"></i> 股票基本概念與知識 ‧ 經典 K 線組合全解析</h2>
+        <p class="knowledge-subtitle">精選台股實戰 13 款多方與空方組合型態、跳空要件、發動訊號、防守價位與真實個股圖解</p>
+      </div>
+      <div class="kline-controls">
+        <div class="kline-filter-group">
+          <button class="kline-filter-btn active" data-filter="all"><i class="fa-solid fa-layer-group"></i> 全部 (13)</button>
+          <button class="kline-filter-btn" data-filter="bullish"><i class="fa-solid fa-circle-arrow-up" style="color:#f87171;"></i> 多方 (6)</button>
+          <button class="kline-filter-btn" data-filter="bearish"><i class="fa-solid fa-circle-arrow-down" style="color:#4ade80;"></i> 空方 (7)</button>
+        </div>
+        <div class="kline-search-wrap">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="klineSearchInput" placeholder="搜尋 K 線名稱、特徵或案例…">
+        </div>
+      </div>
+    </div>
+
+    <div class="knowledge-grid" id="klineGrid">
+
+      <!-- 1. 晨星 Morning Star -->
+      <div class="kline-card" data-type="bullish" data-title="晨星 Morning Star 底部反轉 2002中鋼">
+        <div class="kline-card-header">
+          <span class="kline-badge bullish"><i class="fa-solid fa-arrow-trend-up"></i> 多方看漲 ‧ 底部反轉</span>
+          <span class="kline-number">01 / 13</span>
+        </div>
+        <h3 class="kline-card-title">晨星 <span class="en-name">Morning Star</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="40" y1="10" x2="40" y2="85" stroke="#22c55e" stroke-width="2"/>
+            <rect x="30" y="20" width="20" height="55" fill="#22c55e" rx="2"/>
+            <rect x="58" y="78" width="28" height="20" fill="none" stroke="rgba(255,255,255,0.25)" stroke-dasharray="3,3" rx="2"/>
+            <line x1="97" y1="75" x2="97" y2="108" stroke="#ef4444" stroke-width="2"/>
+            <rect x="90" y="85" width="14" height="14" fill="#ef4444" rx="1"/>
+            <rect x="110" y="70" width="26" height="20" fill="none" stroke="rgba(255,255,255,0.25)" stroke-dasharray="3,3" rx="2"/>
+            <line x1="150" y1="15" x2="150" y2="95" stroke="#ef4444" stroke-width="2"/>
+            <rect x="140" y="25" width="20" height="60" fill="#ef4444" rx="2"/>
+            <line x1="30" y1="47" x2="165" y2="47" stroke="#eab308" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="10" y="45" fill="#eab308" font-size="9">深入1/2確認位</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>由連續 3 根 K 線組成：第1根為長黑K，第2根跳空向下形成小K棒/十字星，第3根為長紅K棒。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 發動條件：</strong><ul><li>第2根K棒必須出現<strong>跳空缺口</strong>，且實體極小。</li><li>第3根長紅K收盤價必須深入第1根長黑K實體的 <strong>1/2 以上</strong>。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 2002 中鋼在 2023/05/11 底部出現標準晨星型態，後續開啟波段反彈行情。</span></div>
+        </div>
+      </div>
+
+      <!-- 2. 晨星島狀反轉 -->
+      <div class="kline-card" data-type="bullish" data-title="晨星島狀反轉 孤島反轉 缺口 3037欣興">
+        <div class="kline-card-header">
+          <span class="kline-badge bullish-strong"><i class="fa-solid fa-bolt"></i> 多方強勢 ‧ 孤島反轉</span>
+          <span class="kline-number">02 / 13</span>
+        </div>
+        <h3 class="kline-card-title">晨星島狀反轉 <span class="en-name">Island Reversal</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 220 120" class="kline-svg">
+            <line x1="30" y1="10" x2="30" y2="75" stroke="#22c55e" stroke-width="2"/>
+            <rect x="21" y="15" width="18" height="50" fill="#22c55e" rx="2"/>
+            <rect x="75" y="70" width="55" height="42" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-dasharray="3,3" rx="4"/>
+            <text x="82" y="105" fill="#38bdf8" font-size="9" font-weight="bold">孤島區域</text>
+            <line x1="88" y1="75" x2="88" y2="98" stroke="#ef4444" stroke-width="1.5"/>
+            <rect x="82" y="80" width="12" height="12" fill="#ef4444" rx="1"/>
+            <line x1="110" y1="75" x2="110" y2="98" stroke="#22c55e" stroke-width="1.5"/>
+            <rect x="104" y="82" width="12" height="10" fill="#22c55e" rx="1"/>
+            <line x1="175" y1="10" x2="175" y2="75" stroke="#ef4444" stroke-width="2"/>
+            <rect x="166" y="15" width="18" height="52" fill="#ef4444" rx="2"/>
+            <text x="44" y="60" fill="#38bdf8" font-size="8">向下缺口</text>
+            <text x="128" y="60" fill="#38bdf8" font-size="8">向上缺口</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>晨星強勢版！底部K棒的<strong>左側與右側同時存在跳空缺口</strong>，使底部K棒孤立如島。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 交易意涵：</strong><ul><li>象徵空頭竭盡與多頭無縫接軌大反攻，為極強烈的波段起漲訊號。</li><li><strong>防守線：</strong> 孤島區域的最低點為不可跌破的強烈支撐線。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 3037 欣興在 2023/05/16 出現晨星島狀反轉，右側跳空後股價直接展開強勢波段大漲。</span></div>
+        </div>
+      </div>
+
+      <!-- 3. 陽線吞噬 -->
+      <div class="kline-card" data-type="bullish" data-title="陽線吞噬 Bullish Engulfing 多頭攻擊 3231緯創">
+        <div class="kline-card-header">
+          <span class="kline-badge bullish"><i class="fa-solid fa-fire"></i> 多方強勢 ‧ 強烈攻擊</span>
+          <span class="kline-number">03 / 13</span>
+        </div>
+        <h3 class="kline-card-title">陽線吞噬 <span class="en-name">Bullish Engulfing</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="55" y1="35" x2="55" y2="85" stroke="#22c55e" stroke-width="2"/>
+            <rect x="47" y="45" width="16" height="30" fill="#22c55e" rx="2"/>
+            <line x1="120" y1="10" x2="120" y2="105" stroke="#ef4444" stroke-width="2"/>
+            <rect x="106" y="20" width="28" height="75" fill="#ef4444" rx="2"/>
+            <line x1="40" y1="20" x2="140" y2="20" stroke="#f87171" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="40" y1="95" x2="140" y2="95" stroke="#f87171" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="142" y="60" fill="#f87171" font-size="8">實體完全包覆</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>由連續兩日 K 線組成，第二根長紅 K 棒的<strong>實體長度完全涵蓋包覆</strong>前一根黑 K 棒的實體。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 關鍵解讀：</strong><ul><li>多頭在第二日全面發動反攻，將前一日空頭賣壓全部吃下。</li><li>若出現在跌勢末端，預示行情將出現<strong>迅速且大幅度</strong>的上漲。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 3231 緯創在 2023 年 AI 浪潮初期於底部出現陽線吞噬後，隨即開展波段數倍大漲行情。</span></div>
+        </div>
+      </div>
+
+      <!-- 4. 三紅兵 -->
+      <div class="kline-card" data-type="bullish" data-title="三紅兵 Three Red Soldiers 底部啟動 2743山富">
+        <div class="kline-card-header">
+          <span class="kline-badge bullish"><i class="fa-solid fa-shield-halved"></i> 底部啟動 ‧ 關鍵防守</span>
+          <span class="kline-number">04 / 13</span>
+        </div>
+        <h3 class="kline-card-title">三紅兵 <span class="en-name">Three Red Soldiers</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="40" y1="55" x2="40" y2="105" stroke="#ef4444" stroke-width="2"/>
+            <rect x="30" y="65" width="20" height="35" fill="#ef4444" rx="2"/>
+            <line x1="85" y1="35" x2="85" y2="90" stroke="#ef4444" stroke-width="2"/>
+            <rect x="75" y="45" width="20" height="38" fill="#ef4444" rx="2"/>
+            <line x1="130" y1="12" x2="130" y2="70" stroke="#ef4444" stroke-width="2"/>
+            <rect x="120" y="20" width="20" height="42" fill="#ef4444" rx="2"/>
+            <line x1="15" y1="100" x2="185" y2="100" stroke="#eab308" stroke-width="2" stroke-dasharray="4,2"/>
+            <text x="15" y="114" fill="#eab308" font-size="9" font-weight="bold">第一根紅K低點 = 關鍵防守線</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>盤整或跌勢底部連續出現 <strong>3 根開低走高的長紅 K 棒</strong>，且一根比一根收盤價更高。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 防守與進場點：</strong><ul><li>代表多頭資金連續三日積極卡位進場。</li><li><strong>核心防守線：</strong> 以「第一根紅 K 棒的最低價」作為波段關鍵防守點，未跌破前維持看多。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 2743 山富於 2023/04 在底部出現三紅兵排列，隨後守住第一根低點防守線並大漲。</span></div>
+        </div>
+      </div>
+
+      <!-- 5. 上升三法 -->
+      <div class="kline-card" data-type="bullish" data-title="上升三法 Rising Three Methods 主升段 2376技嘉">
+        <div class="kline-card-header">
+          <span class="kline-badge bullish"><i class="fa-solid fa-angles-up"></i> 主升段 ‧ 整理續漲</span>
+          <span class="kline-number">05 / 13</span>
+        </div>
+        <h3 class="kline-card-title">上升三法 <span class="en-name">Rising Three Methods</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 220 120" class="kline-svg">
+            <line x1="30" y1="20" x2="30" y2="100" stroke="#ef4444" stroke-width="2"/>
+            <rect x="20" y="30" width="20" height="60" fill="#ef4444" rx="2"/>
+            <rect x="52" y="38" width="12" height="15" fill="#22c55e" rx="1"/>
+            <rect x="72" y="48" width="12" height="15" fill="#22c55e" rx="1"/>
+            <rect x="92" y="58" width="12" height="15" fill="#22c55e" rx="1"/>
+            <line x1="135" y1="10" x2="135" y2="95" stroke="#ef4444" stroke-width="2"/>
+            <rect x="125" y="18" width="20" height="65" fill="#ef4444" rx="2"/>
+            <line x1="20" y1="30" x2="160" y2="30" stroke="#eab308" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <text x="155" y="28" fill="#eab308" font-size="8">第一根高點</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>出現一根長紅 K 後，接著出現 3 根黑 K 棒小幅回擋，這 3 根黑 K 均未跌破第一根長紅 K 的低點，最後再出現一根長紅 K 突破第一根高點。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 買點確認：</strong><ul><li>中間的小黑 K 是多頭蓄力換手的短暫休整。</li><li><strong>確認訊號：</strong> 第二根長紅 K 棒收盤價創高時，即確認上升三法成立，為極佳加碼點。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 2376 技嘉在 2023/07 高檔整理時出現上升三法，確認後股價再度衝高至 382.5 元。</span></div>
+        </div>
+      </div>
+
+      <!-- 6. 多方尖兵 -->
+      <div class="kline-card" data-type="bullish" data-title="多方尖兵 長上影線 突破高點 3231緯創">
+        <div class="kline-card-header">
+          <span class="kline-badge bullish"><i class="fa-solid fa-crosshair"></i> 上影洗盤 ‧ 突破展開</span>
+          <span class="kline-number">06 / 13</span>
+        </div>
+        <h3 class="kline-card-title">多方尖兵 <span class="en-name">Bullish Vanguard</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="45" y1="12" x2="45" y2="95" stroke="#ef4444" stroke-width="2"/>
+            <rect x="35" y="52" width="20" height="40" fill="#ef4444" rx="2"/>
+            <line x1="20" y1="12" x2="165" y2="12" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <text x="50" y="24" fill="#38bdf8" font-size="8">尖兵上影線高點</text>
+            <rect x="75" y="60" width="14" height="22" fill="#22c55e" rx="1"/>
+            <rect x="98" y="55" width="14" height="20" fill="#ef4444" rx="1"/>
+            <line x1="140" y1="8" x2="140" y2="90" stroke="#ef4444" stroke-width="2"/>
+            <rect x="130" y="15" width="20" height="70" fill="#ef4444" rx="2"/>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>上漲行情中出現一根帶有<strong>長上影線</strong>的 K 棒，價格短暫回檔整理後再度回升，直到突破前次長上影線高點。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 觀念解析：</strong><ul><li>長上影線常被誤解為賣壓重，但若為多方尖兵，代表主力預先探路洗盤。</li><li>一旦實體突破前次上影線最高點，即宣告轉為多方尖兵，展開強烈漲勢。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 3231 緯創在上衝過渡期出現長上影線洗盤，後續放量突破高點確立多方尖兵大漲。</span></div>
+        </div>
+      </div>
+
+      <!-- 7. 夜星 -->
+      <div class="kline-card" data-type="bearish" data-title="夜星 Evening Star 頭部反轉 看跌 4532瑞智">
+        <div class="kline-card-header">
+          <span class="kline-badge bearish"><i class="fa-solid fa-arrow-trend-down"></i> 空方看跌 ‧ 頭部反轉</span>
+          <span class="kline-number">07 / 13</span>
+        </div>
+        <h3 class="kline-card-title">夜星 <span class="en-name">Evening Star</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="40" y1="20" x2="40" y2="100" stroke="#ef4444" stroke-width="2"/>
+            <rect x="30" y="35" width="20" height="60" fill="#ef4444" rx="2"/>
+            <line x1="97" y1="8" x2="97" y2="40" stroke="#22c55e" stroke-width="2"/>
+            <rect x="90" y="15" width="14" height="14" fill="#22c55e" rx="1"/>
+            <line x1="150" y1="25" x2="150" y2="110" stroke="#22c55e" stroke-width="2"/>
+            <rect x="140" y="35" width="20" height="65" fill="#22c55e" rx="2"/>
+            <line x1="20" y1="65" x2="175" y2="65" stroke="#eab308" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="10" y="62" fill="#eab308" font-size="9">深入1/2警示位</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>由 3 根 K 線組成：高檔長紅 K + 跳空高懸小 K 棒/十字星 + 下拉長黑 K 棒。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 看空要件：</strong><ul><li>高檔買盤力道竭盡，第三根長黑 K 收盤深入第一根長紅實體 <strong>1/2 以上</strong>。</li><li>代表多頭趨勢反轉結束，行情即將轉為波段走低修正。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 4532 瑞智在 2023/07 高檔 27.45 元附近出現標準夜星型態，隨後股價拉回走低。</span></div>
+        </div>
+      </div>
+
+      <!-- 8. 夜星島狀反轉 -->
+      <div class="kline-card" data-type="bearish" data-title="夜星島狀反轉 高檔孤島 崩跌型態">
+        <div class="kline-card-header">
+          <span class="kline-badge bearish-strong"><i class="fa-solid fa-skull"></i> 極強空頭 ‧ 高檔孤島</span>
+          <span class="kline-number">08 / 13</span>
+        </div>
+        <h3 class="kline-card-title">夜星島狀反轉 <span class="en-name">Evening Island Reversal</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 220 120" class="kline-svg">
+            <line x1="30" y1="40" x2="30" y2="105" stroke="#ef4444" stroke-width="2"/>
+            <rect x="21" y="50" width="18" height="50" fill="#ef4444" rx="2"/>
+            <rect x="75" y="8" width="55" height="40" fill="rgba(248,113,113,0.08)" stroke="#f87171" stroke-dasharray="3,3" rx="4"/>
+            <text x="82" y="32" fill="#f87171" font-size="9" font-weight="bold">高檔孤島</text>
+            <line x1="98" y1="12" x2="98" y2="35" stroke="#22c55e" stroke-width="1.5"/>
+            <rect x="92" y="18" width="12" height="10" fill="#22c55e" rx="1"/>
+            <line x1="175" y1="40" x2="175" y2="110" stroke="#22c55e" stroke-width="2"/>
+            <rect x="166" y="50" width="18" height="55" fill="#22c55e" rx="2"/>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>夜星的高檔進階型態，高檔孤島的<strong>左右兩側同時存在向上與向下跳空缺口</strong>，將頭部籌碼高高套牢。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 出場策略：</strong><ul><li>頭部孤島為極強的反轉訊號，高點套牢區形成日後難以克服的巨量壓力。</li><li>持股者看到夜星島狀反轉應採取積極減碼或停損出場。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 典型高檔孤島出現於急拉後一根跳空大漲K、次日跳空開低再急跌，形成孤立高點。</span></div>
+        </div>
+      </div>
+
+      <!-- 9. 陰線吞噬 -->
+      <div class="kline-card" data-type="bearish" data-title="陰線吞噬 Bearish Engulfing 頭部反轉 高檔逃命">
+        <div class="kline-card-header">
+          <span class="kline-badge bearish"><i class="fa-solid fa-triangle-exclamation"></i> 空方強勢 ‧ 高檔逃命</span>
+          <span class="kline-number">09 / 13</span>
+        </div>
+        <h3 class="kline-card-title">陰線吞噬 <span class="en-name">Bearish Engulfing</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="55" y1="35" x2="55" y2="85" stroke="#ef4444" stroke-width="2"/>
+            <rect x="47" y="45" width="16" height="30" fill="#ef4444" rx="2"/>
+            <line x1="120" y1="10" x2="120" y2="105" stroke="#22c55e" stroke-width="2"/>
+            <rect x="106" y="20" width="28" height="75" fill="#22c55e" rx="2"/>
+            <line x1="40" y1="20" x2="140" y2="20" stroke="#4ade80" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="40" y1="95" x2="140" y2="95" stroke="#4ade80" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="142" y="60" fill="#4ade80" font-size="8">完全吞噬</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>高檔出現一根長黑 K 棒，其<strong>實體完全包覆前一根紅 K 棒實體</strong>，代表賣壓一舉壓倒多頭。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 操作提示：</strong><ul><li>出現在上漲末端的頭部位置，力道越強代表轉折越劇烈。</li><li>隔日若繼續下跌，則確認頭部已形成，應立即減碼或出場。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 許多台股個股在高檔放量大跌日出現陰線吞噬，次日延續跌勢確認反轉。</span></div>
+        </div>
+      </div>
+
+      <!-- 10. 下降三法 -->
+      <div class="kline-card" data-type="bearish" data-title="下降三法 Falling Three Methods 主跌段 空頭中繼">
+        <div class="kline-card-header">
+          <span class="kline-badge bearish"><i class="fa-solid fa-angles-down"></i> 空頭中繼 ‧ 主跌段</span>
+          <span class="kline-number">10 / 13</span>
+        </div>
+        <h3 class="kline-card-title">下降三法 <span class="en-name">Falling Three Methods</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 220 120" class="kline-svg">
+            <line x1="30" y1="20" x2="30" y2="100" stroke="#22c55e" stroke-width="2"/>
+            <rect x="20" y="30" width="20" height="60" fill="#22c55e" rx="2"/>
+            <rect x="52" y="45" width="12" height="15" fill="#ef4444" rx="1"/>
+            <rect x="72" y="52" width="12" height="15" fill="#ef4444" rx="1"/>
+            <rect x="92" y="58" width="12" height="15" fill="#ef4444" rx="1"/>
+            <line x1="135" y1="30" x2="135" y2="110" stroke="#22c55e" stroke-width="2"/>
+            <rect x="125" y="40" width="20" height="60" fill="#22c55e" rx="2"/>
+            <line x1="20" y1="100" x2="160" y2="100" stroke="#eab308" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <text x="155" y="98" fill="#eab308" font-size="8">第一根低點</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>下跌趨勢中出現一根長黑 K 後，中間 3 根小紅 K 棒反彈但未超過第一根長黑 K 的高點，最後再出現一根長黑 K 收破第一根的低點。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 意涵：</strong><ul><li>中間小紅 K 是空頭蓄力的短暫喘息，代表主跌段即將繼續。</li><li>第二根長黑 K 收破低點後，為空頭加碼或出清持股的訊號。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 空頭行情中的反彈整理後出現下降三法，確認主跌段延續，為逃命波結束的訊號。</span></div>
+        </div>
+      </div>
+
+      <!-- 11. 三黑鴉 -->
+      <div class="kline-card" data-type="bearish" data-title="三黑鴉 Three Black Crows 頭部持續下跌">
+        <div class="kline-card-header">
+          <span class="kline-badge bearish"><i class="fa-solid fa-crow"></i> 頭部形成 ‧ 持續下跌</span>
+          <span class="kline-number">11 / 13</span>
+        </div>
+        <h3 class="kline-card-title">三黑鴉 <span class="en-name">Three Black Crows</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="40" y1="15" x2="40" y2="65" stroke="#22c55e" stroke-width="2"/>
+            <rect x="30" y="20" width="20" height="38" fill="#22c55e" rx="2"/>
+            <line x1="85" y1="32" x2="85" y2="85" stroke="#22c55e" stroke-width="2"/>
+            <rect x="75" y="42" width="20" height="38" fill="#22c55e" rx="2"/>
+            <line x1="130" y1="48" x2="130" y2="105" stroke="#22c55e" stroke-width="2"/>
+            <rect x="120" y="56" width="20" height="42" fill="#22c55e" rx="2"/>
+            <line x1="15" y1="20" x2="185" y2="20" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4,2"/>
+            <text x="15" y="15" fill="#f87171" font-size="9">頭部起點</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>連續出現 <strong>3 根開高走低的長黑 K 棒</strong>，且一根比一根收盤價更低，形成空頭強勢排列。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 交易意涵：</strong><ul><li>是三紅兵的空頭對應型態，代表空方主導力道強勁。</li><li>出現在高檔或突破失敗後，往往是波段頭部確立的強烈訊號。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 高檔個股或指數連續三根黑K收低，代表多方完全失守，應積極停損出場。</span></div>
+        </div>
+      </div>
+
+      <!-- 12. 空方尖兵 -->
+      <div class="kline-card" data-type="bearish" data-title="空方尖兵 長下影線 跌破低點 主跌段">
+        <div class="kline-card-header">
+          <span class="kline-badge bearish"><i class="fa-solid fa-crosshair"></i> 下影反彈 ‧ 跌破確認</span>
+          <span class="kline-number">12 / 13</span>
+        </div>
+        <h3 class="kline-card-title">空方尖兵 <span class="en-name">Bearish Vanguard</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="45" y1="20" x2="45" y2="108" stroke="#22c55e" stroke-width="2"/>
+            <rect x="35" y="20" width="20" height="40" fill="#22c55e" rx="2"/>
+            <line x1="20" y1="108" x2="165" y2="108" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <text x="50" y="118" fill="#38bdf8" font-size="8">尖兵下影線低點</text>
+            <rect x="75" y="35" width="14" height="22" fill="#ef4444" rx="1"/>
+            <rect x="98" y="40" width="14" height="20" fill="#22c55e" rx="1"/>
+            <line x1="140" y1="25" x2="140" y2="112" stroke="#22c55e" stroke-width="2"/>
+            <rect x="130" y="25" width="20" height="55" fill="#22c55e" rx="2"/>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>下跌行情中出現一根帶有<strong>長下影線</strong>的 K 棒（看似止跌），但價格回升後若再度跌破前次下影線最低點，即確認為空方尖兵。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 操作要領：</strong><ul><li>長下影線常被誤讀為「止跌訊號」，但若跌破低點即代表是主力試探洗盤。</li><li>跌破空方尖兵低點為主跌段啟動，應立即出場或轉空。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 空頭行情中個股出現帶長下影線的 K 棒反彈，但隨即跌破低點確認空方尖兵主跌段延續。</span></div>
+        </div>
+      </div>
+
+      <!-- 13. 十字星高檔反轉 -->
+      <div class="kline-card" data-type="bearish" data-title="十字星 Doji 高檔猶豫 多空轉折 力道竭盡">
+        <div class="kline-card-header">
+          <span class="kline-badge bearish"><i class="fa-solid fa-question-circle"></i> 多空猶豫 ‧ 力道竭盡</span>
+          <span class="kline-number">13 / 13</span>
+        </div>
+        <h3 class="kline-card-title">高檔十字星 <span class="en-name">High-Price Doji</span></h3>
+        <div class="kline-svg-wrap">
+          <svg viewBox="0 0 200 120" class="kline-svg">
+            <line x1="40" y1="20" x2="40" y2="100" stroke="#ef4444" stroke-width="2"/>
+            <rect x="30" y="35" width="20" height="50" fill="#ef4444" rx="2"/>
+            <!-- Doji Candle -->
+            <line x1="100" y1="8" x2="100" y2="110" stroke="#f9fafb" stroke-width="2"/>
+            <rect x="91" y="56" width="18" height="4" fill="#f9fafb" rx="1"/>
+            <text x="115" y="40" fill="#f9fafb" font-size="8">長上影線</text>
+            <text x="115" y="85" fill="#f9fafb" font-size="8">長下影線</text>
+            <line x1="155" y1="25" x2="155" y2="105" stroke="#22c55e" stroke-width="2"/>
+            <rect x="145" y="40" width="20" height="55" fill="#22c55e" rx="2"/>
+            <line x1="20" y1="8" x2="185" y2="8" stroke="#f87171" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="20" y="6" fill="#f87171" font-size="8">高檔壓力區</text>
+          </svg>
+        </div>
+        <div class="kline-info-body">
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-bullseye"></i> 形態特徵：</strong><p>在上漲高檔出現開盤價等於收盤價（或極小差距）的十字星，代表多空雙方勢均力敵、<strong>買盤力道竭盡</strong>。</p></div>
+          <div class="info-block"><strong class="label"><i class="fa-solid fa-key"></i> 判讀重點：</strong><ul><li>高檔十字星配合<strong>巨大成交量</strong>，往往代表主力出貨型態，警示意義極強。</li><li>次日若出現長黑 K 收低（尤其深入十字星實體以下），代表頭部確立。</li></ul></div>
+          <div class="case-study"><i class="fa-solid fa-chart-line icon"></i><span><strong>實戰案例：</strong> 任何個股或大盤在連漲高點出現高量十字星，均應視為短線轉折的敏感訊號，適時減碼保護獲利。</span></div>
+        </div>
+      </div>
+
+    </div><!-- /knowledge-grid -->
+  </section><!-- /#knowledge-kline -->
+
+  <!-- Auth Login Overlay -->
+  <div class="auth-overlay" id="authOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,15,30,0.85); backdrop-filter:blur(20px); z-index:9999; align-items:center; justify-content:center; padding:1rem;">
+    <div class="auth-box" style="background:rgba(13,24,47,0.75); border:1px solid rgba(56,189,248,0.25); border-radius:16px; padding:2.5rem; width:100%; max-width:400px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.6); position:relative; overflow:hidden;">
+      <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(56,189,248,0.06) 0%, rgba(0,0,0,0) 70%); z-index:1; pointer-events:none;"></div>
+      <div style="position:relative; z-index:2;">
+        <div style="width:64px; height:64px; background:linear-gradient(135deg, #0ea5e9, #6366f1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem; box-shadow:0 8px 20px rgba(14,165,233,0.35);">
+          <i class="fa-solid fa-arrow-trend-up" style="font-size:1.8rem; color:#fff;"></i>
+        </div>
+        <h2 style="font-family:'Outfit', 'Noto Sans TC', sans-serif; font-weight:700; font-size:1.5rem; color:#fff; margin-bottom:0.5rem; letter-spacing:0.5px;">台股與美股本益比分析</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:2rem; line-height:1.5;">本系統僅限受邀管理員使用，請使用您的 Google 帳戶登入以繼續。</p>
+        
+        <!-- Google Sign-in Buttons -->
+        <div style="display:flex; justify-content:center; margin-bottom:1rem;">
+          <div id="googleBtnContainer"></div>
+        </div>
+        
+        <!-- Error Notice -->
+        <div id="authErrorMsg" style="display:none; color:#f87171; background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.2); border-radius:8px; padding:0.75rem; font-size:0.8rem; margin-top:1.5rem; line-height:1.4;">
+          登入失敗，請確認是否為受邀帳號。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
