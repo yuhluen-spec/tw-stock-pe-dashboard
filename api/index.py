@@ -12,6 +12,12 @@ from flask import Flask, jsonify, request, send_from_directory, session
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'default-stock-pe-dashboard-secret-key-12938')
 
+# Session cookie settings for HTTPS (Vercel production)
+# Without Secure=True on HTTPS, browsers may silently drop the session cookie
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+
 # Base directory for static files
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
